@@ -43,14 +43,12 @@ function ManageTransactionPage() {
      ========================================================= */
 
   useEffect(() => {
+    let ignore = false;
 
     const loadData = async () => {
-
       try {
-
         setLoading(true);
         setErrorMessage("");
-
 
         const [
           transactionData,
@@ -60,9 +58,11 @@ function ManageTransactionPage() {
           getActiveServices()
         ]);
 
+        if (ignore) {
+          return;
+        }
 
         setServices(serviceData);
-
 
         const selectedTransaction =
           transactionData.find(
@@ -70,49 +70,42 @@ function ManageTransactionPage() {
               item.id === transactionId
           );
 
-
         if (!selectedTransaction) {
-
           setTransaction(null);
-
           setErrorMessage(
             "Transaction / Document not found."
           );
-
           return;
-
         }
-
 
         setTransaction(
           selectedTransaction
         );
 
-
       } catch (error) {
-
         console.error(
           "Failed to load transaction:",
           error
         );
 
-
-        setErrorMessage(
-          "Unable to load transaction information."
-        );
-
+        if (!ignore) {
+          setErrorMessage(
+            "Unable to load transaction information."
+          );
+        }
 
       } finally {
-
-        setLoading(false);
-
+        if (!ignore) {
+          setLoading(false);
+        }
       }
-
     };
-
 
     loadData();
 
+    return () => {
+      ignore = true;
+    };
   }, [transactionId]);
 
 

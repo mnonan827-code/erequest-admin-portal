@@ -32,43 +32,44 @@ function AddTransactionPage() {
      ========================================================= */
 
   useEffect(() => {
+    let ignore = false;
 
     const loadServices = async () => {
-
       try {
-
         setLoading(true);
         setErrorMessage("");
 
         const serviceData =
           await getActiveServices();
 
-        setServices(serviceData);
-
+        if (!ignore) {
+          setServices(serviceData);
+        }
 
       } catch (error) {
-
         console.error(
           "Failed to load services:",
           error
         );
 
-        setErrorMessage(
-          "Unable to load services."
-        );
-
+        if (!ignore) {
+          setErrorMessage(
+            "Unable to load services."
+          );
+        }
 
       } finally {
-
-        setLoading(false);
-
+        if (!ignore) {
+          setLoading(false);
+        }
       }
-
     };
-
 
     loadServices();
 
+    return () => {
+      ignore = true;
+    };
   }, []);
 
 

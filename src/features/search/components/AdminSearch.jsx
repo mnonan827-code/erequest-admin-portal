@@ -44,49 +44,46 @@ function AdminSearch() {
      ========================================================= */
 
   useEffect(() => {
+    let ignore = false;
 
     const loadSearchData = async () => {
-
       try {
-
         setLoading(true);
-
         setErrorMessage("");
-
 
         const data =
           await getAdminSearchData();
 
-
-        setSearchData(
-          data
-        );
-
+        if (!ignore) {
+          setSearchData(
+            data
+          );
+        }
 
       } catch (error) {
-
         console.error(
           "Failed to load admin search data:",
           error
         );
 
-
-        setErrorMessage(
-          "Unable to load search data."
-        );
-
+        if (!ignore) {
+          setErrorMessage(
+            "Unable to load search data."
+          );
+        }
 
       } finally {
-
-        setLoading(false);
-
+        if (!ignore) {
+          setLoading(false);
+        }
       }
-
     };
-
 
     loadSearchData();
 
+    return () => {
+      ignore = true;
+    };
   }, []);
 
 

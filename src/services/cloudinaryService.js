@@ -1,5 +1,14 @@
-const CLOUD_NAME = "hu9xgqne";
-const UPLOAD_PRESET = "erequest_procedure_images";
+const CLOUD_NAME =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) ||
+  "hu9xgqne";
+
+const UPLOAD_PRESET =
+  (typeof import.meta !== "undefined" &&
+    import.meta.env &&
+    import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) ||
+  "erequest_procedure_images";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 

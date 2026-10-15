@@ -1,36 +1,14 @@
 import {
+  lazy,
+  Suspense
+} from "react";
+
+import {
   HashRouter,
   Navigate,
   Route,
   Routes
 } from "react-router-dom";
-
-import LoginPage
-  from "./features/auth/pages/LoginPage";
-
-import DashboardPage
-  from "./features/dashboard/pages/DashboardPage";
-
-import ServicesPage
-  from "./features/services/pages/ServicesPage";
-
-import TransactionsPage
-  from "./features/transactions/pages/TransactionsPage";
-
-import AddTransactionPage
-  from "./features/transactions/pages/AddTransactionPage";
-
-import EditTransactionPage
-  from "./features/transactions/pages/EditTransactionPage";
-
-import ManageTransactionPage
-  from "./features/transactions/pages/ManageTransactionPage";
-
-import AnnouncementsPage
-  from "./features/announcements/pages/AnnouncementsPage";
-
-import RequirementsPage
-  from "./features/requirements/pages/RequirementsPage";
 
 import ProtectedRoute
   from "./features/auth/components/ProtectedRoute";
@@ -38,12 +16,59 @@ import ProtectedRoute
 import AdminLayout
   from "./layouts/AdminLayout";
 
+const LoginPage =
+  lazy(() => import("./features/auth/pages/LoginPage"));
+
+const DashboardPage =
+  lazy(() => import("./features/dashboard/pages/DashboardPage"));
+
+const ServicesPage =
+  lazy(() => import("./features/services/pages/ServicesPage"));
+
+const TransactionsPage =
+  lazy(() => import("./features/transactions/pages/TransactionsPage"));
+
+const AddTransactionPage =
+  lazy(() => import("./features/transactions/pages/AddTransactionPage"));
+
+const EditTransactionPage =
+  lazy(() => import("./features/transactions/pages/EditTransactionPage"));
+
+const ManageTransactionPage =
+  lazy(() => import("./features/transactions/pages/ManageTransactionPage"));
+
+const AnnouncementsPage =
+  lazy(() => import("./features/announcements/pages/AnnouncementsPage"));
+
+const RequirementsPage =
+  lazy(() => import("./features/requirements/pages/RequirementsPage"));
+
+function RouteLoadingFallback() {
+  return (
+    <div
+      style={{
+        width: "100%",
+        minHeight: "60vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#244f7c",
+        fontFamily: "Inter, Arial, Helvetica, sans-serif",
+        fontSize: "15px"
+      }}
+    >
+      Loading...
+    </div>
+  );
+}
 
 function App() {
 
   return (
 
     <HashRouter>
+
+      <Suspense fallback={<RouteLoadingFallback />}>
 
       <Routes>
 
@@ -167,6 +192,8 @@ function App() {
 
 
       </Routes>
+
+      </Suspense>
 
     </HashRouter>
 
