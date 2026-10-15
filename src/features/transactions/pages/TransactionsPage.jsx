@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -48,6 +48,9 @@ function TransactionsPage() {
     useState("");
 
   const [serviceFilter, setServiceFilter] =
+    useState("");
+
+  const [searchQuery, setSearchQuery] =
     useState("");
 
 
@@ -353,17 +356,41 @@ function TransactionsPage() {
 
 
   /* =========================================================
-     FILTER
+     FILTER (SERVICE + SEARCH QUERY)
      ========================================================= */
 
-  const filteredTransactions =
-    serviceFilter
-      ? transactions.filter(
-          (transaction) =>
-            transaction.serviceId ===
-            serviceFilter
-        )
-      : transactions;
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      if (serviceFilter && transaction.serviceId !== serviceFilter) {
+        return false;
+      }
+
+      if (searchQuery.trim()) {
+        const clean = searchQuery.toLowerCase().trim();
+        const service = services.find(
+          (s) => s.id === transaction.serviceId
+        );
+        const serviceName = (service?.name || "").toLowerCase();
+        const name = (transaction.name || "").toLowerCase();
+        const desc = (transaction.description || "").toLowerCase();
+        const office = (transaction.officeName || "").toLowerCase();
+        const schedule = (transaction.officeSchedule || "").toLowerCase();
+
+        const match =
+          name.includes(clean) ||
+          desc.includes(clean) ||
+          office.includes(clean) ||
+          schedule.includes(clean) ||
+          serviceName.includes(clean);
+
+        if (!match) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [transactions, serviceFilter, searchQuery, services]);
 
 
   /* =========================================================
@@ -420,13 +447,53 @@ function TransactionsPage() {
             </div>
 
 
-            <button
-              type="button"
-              className="transaction-primary-button"
-              onClick={handleAddTransaction}
-            >
-              + Add Transaction / Document
-            </button>
+            <div className="transactions-header-actions">
+
+              {/* CONTEXTUAL SEARCH BAR */}
+              <div className="transactions-search-bar">
+
+                <span
+                  className="transactions-search-icon"
+                  aria-hidden="true"
+                >
+                  🔍
+                </span>
+
+                <input
+                  type="text"
+                  className="transactions-search-input"
+                  placeholder="Search transactions..."
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(event.target.value)
+                  }
+                  aria-label="Search transactions"
+                />
+
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="transactions-search-clear"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+
+              </div>
+
+
+              <button
+                type="button"
+                className="transaction-primary-button"
+                onClick={handleAddTransaction}
+              >
+                + Add Transaction / Document
+              </button>
+
+            </div>
 
           </div>
 
@@ -516,7 +583,9 @@ function TransactionsPage() {
           ) : filteredTransactions.length === 0 ? (
 
             <p className="transactions-state-message">
-              No transactions found.
+              {searchQuery || serviceFilter
+                ? "No transactions found matching your criteria."
+                : "No transactions found."}
             </p>
 
           ) : (

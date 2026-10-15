@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   updateDoc,
   deleteDoc,
@@ -43,6 +44,34 @@ export async function getAllTransactions() {
 
 
 /* =========================================
+   GET TRANSACTION BY ID
+   ========================================= */
+
+export async function getTransactionById(transactionId) {
+  if (!transactionId) {
+    return null;
+  }
+
+  const docRef = doc(
+    db,
+    TRANSACTIONS_COLLECTION,
+    transactionId
+  );
+
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) {
+    return null;
+  }
+
+  return {
+    id: docSnap.id,
+    ...docSnap.data()
+  };
+}
+
+
+/* =========================================
    GET ACTIVE SERVICES
    ========================================= */
 
@@ -76,15 +105,27 @@ async function getServiceName(serviceId) {
     return "";
   }
 
-  const snapshot = await getDocs(
-    collection(db, SERVICES_COLLECTION)
-  );
+  try {
+    const docRef = doc(
+      db,
+      SERVICES_COLLECTION,
+      serviceId
+    );
 
-  const service = snapshot.docs.find(
-    (document) => document.id === serviceId
-  );
+    const docSnap = await getDoc(docRef);
 
-  return service?.data()?.name || "";
+    if (!docSnap.exists()) {
+      return "";
+    }
+
+    return docSnap.data()?.name || "";
+  } catch (error) {
+    console.error(
+      "Failed to get service name:",
+      error
+    );
+    return "";
+  }
 }
 
 

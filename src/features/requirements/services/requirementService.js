@@ -1,7 +1,10 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
+  query,
+  where,
   updateDoc,
   deleteDoc,
   serverTimestamp
@@ -50,6 +53,35 @@ export async function getAllRequirements() {
 
 
 /* =========================================
+   GET REQUIREMENTS BY TRANSACTION ID
+   ========================================= */
+
+export async function getRequirementsByTransactionId(transactionId) {
+  if (!transactionId) {
+    return [];
+  }
+
+  const q = query(
+    collection(db, REQUIREMENTS_COLLECTION),
+    where("transactionId", "==", transactionId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  const requirements = snapshot.docs.map((document) => ({
+    id: document.id,
+    ...document.data()
+  }));
+
+  requirements.sort(
+    (a, b) => (a.displayOrder || 0) - (b.displayOrder || 0)
+  );
+
+  return requirements;
+}
+
+
+/* =========================================
    GET ACTIVE TRANSACTIONS
    ========================================= */
 
@@ -86,15 +118,27 @@ async function getTransactionName(transactionId) {
     return "";
   }
 
-  const snapshot = await getDocs(
-    collection(db, TRANSACTIONS_COLLECTION)
-  );
+  try {
+    const docRef = doc(
+      db,
+      TRANSACTIONS_COLLECTION,
+      transactionId
+    );
 
-  const transaction = snapshot.docs.find(
-    (document) => document.id === transactionId
-  );
+    const docSnap = await getDoc(docRef);
 
-  return transaction?.data()?.name || "";
+    if (!docSnap.exists()) {
+      return "";
+    }
+
+    return docSnap.data()?.name || "";
+  } catch (error) {
+    console.error(
+      "Failed to get transaction name:",
+      error
+    );
+    return "";
+  }
 }
 
 

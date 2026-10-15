@@ -3,6 +3,8 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
+  where,
   updateDoc,
   deleteDoc,
   serverTimestamp
@@ -51,6 +53,33 @@ export async function getAllGuidelines() {
 
 
 /* =========================================
+   GET GUIDELINES BY TRANSACTION ID
+   ========================================= */
+
+export async function getGuidelinesByTransactionId(transactionId) {
+  if (!transactionId) {
+    return [];
+  }
+
+  const q = query(
+    collection(db, GUIDELINES_COLLECTION),
+    where("transactionId", "==", transactionId)
+  );
+
+  const snapshot = await getDocs(q);
+
+  const guidelines = snapshot.docs.map((document) => ({
+    id: document.id,
+    ...document.data()
+  }));
+
+  guidelines.sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+
+  return guidelines;
+}
+
+
+/* =========================================
    GET TRANSACTION NAME
    For Recent Updates
    ========================================= */
@@ -60,15 +89,27 @@ async function getTransactionName(transactionId) {
     return "";
   }
 
-  const snapshot = await getDocs(
-    collection(db, TRANSACTIONS_COLLECTION)
-  );
+  try {
+    const docRef = doc(
+      db,
+      TRANSACTIONS_COLLECTION,
+      transactionId
+    );
 
-  const transaction = snapshot.docs.find(
-    (document) => document.id === transactionId
-  );
+    const docSnap = await getDoc(docRef);
 
-  return transaction?.data()?.name || "";
+    if (!docSnap.exists()) {
+      return "";
+    }
+
+    return docSnap.data()?.name || "";
+  } catch (error) {
+    console.error(
+      "Failed to get transaction name:",
+      error
+    );
+    return "";
+  }
 }
 
 

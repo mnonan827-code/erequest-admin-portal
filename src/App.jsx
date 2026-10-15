@@ -25,6 +25,9 @@ const DashboardPage =
 const ServicesPage =
   lazy(() => import("./features/services/pages/ServicesPage"));
 
+const AddServicePage =
+  lazy(() => import("./features/services/pages/AddServicePage"));
+
 const TransactionsPage =
   lazy(() => import("./features/transactions/pages/TransactionsPage"));
 
@@ -39,6 +42,9 @@ const ManageTransactionPage =
 
 const AnnouncementsPage =
   lazy(() => import("./features/announcements/pages/AnnouncementsPage"));
+
+const AddAnnouncementPage =
+  lazy(() => import("./features/announcements/pages/AddAnnouncementPage"));
 
 const RequirementsPage =
   lazy(() => import("./features/requirements/pages/RequirementsPage"));
@@ -123,6 +129,14 @@ function App() {
             />
 
 
+            {/* ADD SERVICE */}
+
+            <Route
+              path="/services/add"
+              element={<AddServicePage />}
+            />
+
+
             {/* TRANSACTIONS */}
 
             <Route
@@ -168,6 +182,14 @@ function App() {
             <Route
               path="/announcements"
               element={<AnnouncementsPage />}
+            />
+
+
+            {/* ADD ANNOUNCEMENT */}
+
+            <Route
+              path="/announcements/add"
+              element={<AddAnnouncementPage />}
             />
 
 

@@ -5,7 +5,7 @@ import {
 } from "react-router-dom";
 
 import {
-  getAllTransactions,
+  getTransactionById,
   getActiveServices,
   updateTransaction
 } from "../services/transactionService";
@@ -63,10 +63,10 @@ function EditTransactionPage() {
         setErrorMessage("");
 
         const [
-          transactionData,
+          selectedTransaction,
           serviceData
         ] = await Promise.all([
-          getAllTransactions(),
+          getTransactionById(transactionId),
           getActiveServices()
         ]);
 
@@ -75,12 +75,6 @@ function EditTransactionPage() {
         }
 
         setServices(serviceData);
-
-        const selectedTransaction =
-          transactionData.find(
-            (transaction) =>
-              transaction.id === transactionId
-          );
 
         if (!selectedTransaction) {
           setErrorMessage(
@@ -301,27 +295,6 @@ function EditTransactionPage() {
         ) : (
 
           <section className="edit-transaction-card">
-
-
-            {/* TRANSACTION ID DISPLAY */}
-
-            <div className="edit-transaction-id-box">
-
-              <span>
-                Transaction ID
-              </span>
-
-              <strong>
-                {transactionId}
-              </strong>
-
-              <small>
-                Transaction ID cannot be changed.
-              </small>
-
-            </div>
-
-
 
             <form
               className="edit-transaction-form"

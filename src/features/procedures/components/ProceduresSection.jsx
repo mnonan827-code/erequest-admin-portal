@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 
 import {
-  getAllProcedureSteps,
+  getProcedureStepsByTransactionId,
   addProcedureStep,
   updateProcedureStep,
   setProcedureStepActiveStatus,
@@ -66,20 +66,8 @@ function ProceduresSection({
       setLoading(true);
       setErrorMessage("");
 
-      const allProcedures =
-        await getAllProcedureSteps();
-
       const filteredProcedures =
-        allProcedures
-          .filter(
-            (procedure) =>
-              procedure.transactionId === transactionId
-          )
-          .sort(
-            (a, b) =>
-              (a.stepNumber || 0) -
-              (b.stepNumber || 0)
-          );
+        await getProcedureStepsByTransactionId(transactionId);
 
       setProcedures(filteredProcedures);
 
@@ -108,22 +96,10 @@ function ProceduresSection({
 
     const fetchProcedures = async () => {
       try {
-        const allProcedures =
-          await getAllProcedureSteps();
+        const filteredProcedures =
+          await getProcedureStepsByTransactionId(transactionId);
 
         if (!ignore) {
-          const filteredProcedures =
-            allProcedures
-              .filter(
-                (procedure) =>
-                  procedure.transactionId === transactionId
-              )
-              .sort(
-                (a, b) =>
-                  (a.stepNumber || 0) -
-                  (b.stepNumber || 0)
-              );
-
           setProcedures(filteredProcedures);
         }
 

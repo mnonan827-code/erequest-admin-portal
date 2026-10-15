@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   getAllAnnouncements,
@@ -16,6 +16,7 @@ import "../components/AnnouncementsPage.css";
 
 function AnnouncementsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,9 +27,9 @@ function AnnouncementsPage() {
     useState(null);
 
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-
-  const [showForm, setShowForm] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(
+    () => location.state?.successMessage || ""
+  );
 
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -36,6 +37,13 @@ function AnnouncementsPage() {
 
   const [editingAnnouncement, setEditingAnnouncement] =
     useState(null);
+
+  /* CLEAR NAVIGATION STATE */
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
 
   /* =========================================================
@@ -131,7 +139,6 @@ function AnnouncementsPage() {
     setDisplayOrder("");
 
     setEditingAnnouncement(null);
-    setShowForm(false);
   };
 
 
@@ -140,21 +147,7 @@ function AnnouncementsPage() {
      ========================================================= */
 
   const handleAdd = () => {
-    setTitle("");
-    setMessage("");
-
-    setDisplayOrder(
-      String(
-        announcements.length + 1
-      )
-    );
-
-    setEditingAnnouncement(null);
-
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    setShowForm(true);
+    navigate("/announcements/add");
   };
 
 
@@ -184,8 +177,6 @@ function AnnouncementsPage() {
 
     setErrorMessage("");
     setSuccessMessage("");
-
-    setShowForm(true);
 
     window.scrollTo({
       top: 0,
@@ -265,7 +256,6 @@ function AnnouncementsPage() {
       setDisplayOrder("");
 
       setEditingAnnouncement(null);
-      setShowForm(false);
 
       await loadAnnouncements();
 
@@ -491,15 +481,13 @@ function AnnouncementsPage() {
           )}
 
 
-          {/* ADD / EDIT FORM */}
+          {/* EDIT FORM (ONLY WHEN EDITING) */}
 
-          {showForm && (
+          {editingAnnouncement && (
             <section className="announcement-card">
 
               <h2>
-                {editingAnnouncement
-                  ? "Edit Announcement"
-                  : "Add Announcement"}
+                Edit Announcement
               </h2>
 
 
@@ -595,9 +583,7 @@ function AnnouncementsPage() {
                   >
                     {saving
                       ? "Saving..."
-                      : editingAnnouncement
-                        ? "Save Changes"
-                        : "Add Announcement"}
+                      : "Save Changes"}
                   </button>
 
 

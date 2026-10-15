@@ -1,6 +1,8 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from "react";
 
@@ -33,58 +35,60 @@ function AdminSearch() {
     useState(null);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(false);
 
   const [errorMessage, setErrorMessage] =
     useState("");
 
-
-  /* =========================================================
-     LOAD SEARCH DATA
-     ========================================================= */
+  const isFetchingRef = useRef(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let ignore = false;
-
-    const loadSearchData = async () => {
-      try {
-        setLoading(true);
-        setErrorMessage("");
-
-        const data =
-          await getAdminSearchData();
-
-        if (!ignore) {
-          setSearchData(
-            data
-          );
-        }
-
-      } catch (error) {
-        console.error(
-          "Failed to load admin search data:",
-          error
-        );
-
-        if (!ignore) {
-          setErrorMessage(
-            "Unable to load search data."
-          );
-        }
-
-      } finally {
-        if (!ignore) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadSearchData();
-
+    mountedRef.current = true;
     return () => {
-      ignore = true;
+      mountedRef.current = false;
     };
   }, []);
+
+  /* =========================================================
+     LOAD SEARCH DATA (LAZY - ON FOCUS OR INPUT)
+     ========================================================= */
+
+  const loadSearchData = useCallback(async () => {
+    if (searchData || isFetchingRef.current) {
+      return;
+    }
+
+    try {
+      isFetchingRef.current = true;
+      setLoading(true);
+      setErrorMessage("");
+
+      const data = await getAdminSearchData();
+
+      if (mountedRef.current) {
+        setSearchData(data);
+      }
+
+    } catch (error) {
+      console.error(
+        "Failed to load admin search data:",
+        error
+      );
+
+      if (mountedRef.current) {
+        setErrorMessage(
+          "Unable to load search data."
+        );
+      }
+
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+      isFetchingRef.current = false;
+    }
+  }, [searchData]);
 
 
   /* =========================================================
@@ -180,11 +184,13 @@ function AdminSearch() {
           placeholder="Search admin records..."
           value={query}
           autoComplete="off"
-          onChange={(event) =>
+          onFocus={loadSearchData}
+          onChange={(event) => {
+            loadSearchData();
             setQuery(
               event.target.value
-            )
-          }
+            );
+          }}
         />
 
 

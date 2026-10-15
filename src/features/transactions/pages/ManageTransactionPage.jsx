@@ -5,7 +5,7 @@ import {
 } from "react-router-dom";
 
 import {
-  getAllTransactions,
+  getTransactionById,
   getActiveServices
 } from "../services/transactionService";
 
@@ -51,10 +51,10 @@ function ManageTransactionPage() {
         setErrorMessage("");
 
         const [
-          transactionData,
+          selectedTransaction,
           serviceData
         ] = await Promise.all([
-          getAllTransactions(),
+          getTransactionById(transactionId),
           getActiveServices()
         ]);
 
@@ -63,12 +63,6 @@ function ManageTransactionPage() {
         }
 
         setServices(serviceData);
-
-        const selectedTransaction =
-          transactionData.find(
-            (item) =>
-              item.id === transactionId
-          );
 
         if (!selectedTransaction) {
           setTransaction(null);
@@ -332,19 +326,6 @@ function ManageTransactionPage() {
                   transaction.serviceId
                 )}
 
-              </strong>
-
-            </div>
-
-
-            <div>
-
-              <span>
-                Transaction ID
-              </span>
-
-              <strong>
-                {transaction.id}
               </strong>
 
             </div>

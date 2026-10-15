@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   getAllServices,
@@ -17,13 +17,18 @@ import "../components/ServicesPage.css";
 
 function ServicesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState(
+    () => location.state?.successMessage || ""
+  );
+
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -35,6 +40,26 @@ function ServicesPage() {
   const [deleting, setDeleting] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedDetails, setBlockedDetails] = useState([]);
+
+  /* CLEAR NAVIGATION STATE */
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  /* FILTERED SERVICES BY SEARCH */
+  const filteredServices = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return services;
+    }
+    const clean = searchQuery.toLowerCase().trim();
+    return services.filter((service) => {
+      const matchName = (service.name || "").toLowerCase().includes(clean);
+      const matchDesc = (service.description || "").toLowerCase().includes(clean);
+      return matchName || matchDesc;
+    });
+  }, [services, searchQuery]);
 
 
   /* =========================================================
@@ -423,103 +448,169 @@ function ServicesPage() {
 
         <header className="services-header">
 
-          <h1>
-            Services
-          </h1>
+          <div className="services-header-content">
 
-          <p>
-            Add and update the services available in E-ReQuest.
-          </p>
+            <div>
+              <h1>
+                Services
+              </h1>
+
+              <p>
+                Add and update the services available in E-ReQuest.
+              </p>
+            </div>
+
+
+            <div className="services-header-actions">
+
+              {/* CONTEXTUAL SEARCH BAR */}
+              <div className="services-search-bar">
+
+                <span
+                  className="services-search-icon"
+                  aria-hidden="true"
+                >
+                  🔍
+                </span>
+
+                <input
+                  type="text"
+                  className="services-search-input"
+                  placeholder="Search services..."
+                  value={searchQuery}
+                  onChange={(event) =>
+                    setSearchQuery(event.target.value)
+                  }
+                  aria-label="Search services"
+                />
+
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="services-search-clear"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    ×
+                  </button>
+                )}
+
+              </div>
+
+
+              {/* ADD SERVICE BUTTON */}
+              <button
+                type="button"
+                className="service-primary-button"
+                onClick={() => navigate("/services/add")}
+              >
+                + Add Service
+              </button>
+
+            </div>
+
+          </div>
 
         </header>
 
 
+        {/* MESSAGES */}
+
+        {errorMessage && (
+          <div className="service-error" style={{ marginBottom: "20px" }}>
+            {errorMessage}
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="service-success" style={{ marginBottom: "20px" }}>
+            {successMessage}
+          </div>
+        )}
+
+
         {/* ===================================================
-            ADD / EDIT SERVICE
+            EDIT SERVICE (ONLY WHEN EDITING)
             =================================================== */}
 
-        <section className="services-card">
+        {editingService && (
+          <section className="services-card">
 
-          <h2>
-            {editingService
-              ? "Edit Service"
-              : "Add Service"}
-          </h2>
+            <h2>
+              Edit Service
+            </h2>
 
 
-          <form
-            className="service-form"
-            onSubmit={handleSubmit}
-          >
+            <form
+              className="service-form"
+              onSubmit={handleSubmit}
+            >
 
-            <div className="service-form-grid">
+              <div className="service-form-grid">
 
-              {/* SERVICE NAME */}
+                {/* SERVICE NAME */}
 
-              <div className="service-form-group">
+                <div className="service-form-group">
 
-                <label htmlFor="serviceName">
-                  Service Name
-                </label>
+                  <label htmlFor="serviceName">
+                    Service Name
+                  </label>
 
-                <input
-                  id="serviceName"
-                  type="text"
-                  placeholder="Example: Registrar"
-                  value={name}
-                  onChange={(event) =>
-                    setName(event.target.value)
-                  }
-                  disabled={saving}
-                />
+                  <input
+                    id="serviceName"
+                    type="text"
+                    placeholder="Example: Registrar"
+                    value={name}
+                    onChange={(event) =>
+                      setName(event.target.value)
+                    }
+                    disabled={saving}
+                  />
+
+                </div>
+
+
+                {/* DESCRIPTION */}
+
+                <div className="service-form-group full-width">
+
+                  <label htmlFor="serviceDescription">
+                    Description
+                  </label>
+
+                  <textarea
+                    id="serviceDescription"
+                    placeholder="Enter service description"
+                    value={description}
+                    onChange={(event) =>
+                      setDescription(
+                        event.target.value
+                      )
+                    }
+                    disabled={saving}
+                    rows="4"
+                  />
+
+                </div>
 
               </div>
 
 
-              {/* DESCRIPTION */}
+              {/* FORM BUTTONS */}
 
-              <div className="service-form-group full-width">
+              <div className="service-form-actions">
 
-                <label htmlFor="serviceDescription">
-                  Description
-                </label>
-
-                <textarea
-                  id="serviceDescription"
-                  placeholder="Enter service description"
-                  value={description}
-                  onChange={(event) =>
-                    setDescription(
-                      event.target.value
-                    )
-                  }
+                <button
+                  type="submit"
+                  className="service-primary-button"
                   disabled={saving}
-                  rows="4"
-                />
+                >
+                  {saving
+                    ? "Saving..."
+                    : "Save Changes"}
+                </button>
 
-              </div>
-
-            </div>
-
-
-            {/* FORM BUTTONS */}
-
-            <div className="service-form-actions">
-
-              <button
-                type="submit"
-                className="service-primary-button"
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving..."
-                  : editingService
-                    ? "Save Changes"
-                    : "Add Service"}
-              </button>
-
-
-              {editingService && (
 
                 <button
                   type="button"
@@ -530,31 +621,12 @@ function ServicesPage() {
                   Cancel
                 </button>
 
-              )}
+              </div>
 
-            </div>
+            </form>
 
-          </form>
-
-
-          {/* ERROR MESSAGE */}
-
-          {errorMessage && (
-            <div className="service-error">
-              {errorMessage}
-            </div>
-          )}
-
-
-          {/* SUCCESS MESSAGE */}
-
-          {successMessage && (
-            <div className="service-success">
-              {successMessage}
-            </div>
-          )}
-
-        </section>
+          </section>
+        )}
 
 
         {/* ===================================================
@@ -574,17 +646,19 @@ function ServicesPage() {
               Loading services...
             </p>
 
-          ) : services.length === 0 ? (
+          ) : filteredServices.length === 0 ? (
 
             <p className="services-state-message">
-              No services found.
+              {searchQuery
+                ? `No services found matching "${searchQuery}".`
+                : "No services found."}
             </p>
 
           ) : (
 
             <div className="services-list">
 
-              {services.map((service) => (
+              {filteredServices.map((service) => (
 
                 <article
                   key={service.id}

@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 
 import {
-  getAllGuidelines,
+  getGuidelinesByTransactionId,
   addGuideline,
   updateGuideline,
   setGuidelineActiveStatus,
@@ -49,21 +49,8 @@ function GuidelinesSection({
       setLoading(true);
       setErrorMessage("");
 
-      const allGuidelines =
-        await getAllGuidelines();
-
       const filteredGuidelines =
-        allGuidelines
-          .filter(
-            (guideline) =>
-              guideline.transactionId ===
-              transactionId
-          )
-          .sort(
-            (a, b) =>
-              (a.displayOrder || 0) -
-              (b.displayOrder || 0)
-          );
+        await getGuidelinesByTransactionId(transactionId);
 
       setGuidelines(
         filteredGuidelines
@@ -94,23 +81,10 @@ function GuidelinesSection({
 
     const fetchGuidelines = async () => {
       try {
-        const allGuidelines =
-          await getAllGuidelines();
+        const filteredGuidelines =
+          await getGuidelinesByTransactionId(transactionId);
 
         if (!ignore) {
-          const filteredGuidelines =
-            allGuidelines
-              .filter(
-                (guideline) =>
-                  guideline.transactionId ===
-                  transactionId
-              )
-              .sort(
-                (a, b) =>
-                  (a.displayOrder || 0) -
-                  (b.displayOrder || 0)
-              );
-
           setGuidelines(
             filteredGuidelines
           );

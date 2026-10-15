@@ -1,0 +1,204 @@
+/* =========================================
+   E-REQUEST ADMIN PORTAL
+   ADD ANNOUNCEMENT PAGE
+   ========================================= */
+
+.add-announcement-page {
+  width: 100%;
+  min-height: 100vh;
+  padding: 32px;
+  background: #f7f9fc;
+  color: #1d2d3e;
+  font-family:
+    Inter,
+    Arial,
+    Helvetica,
+    sans-serif;
+}
+
+.add-announcement-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* =========================================
+   BACK BUTTON
+   ========================================= */
+
+.add-announcement-back-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-bottom: 20px;
+  color: #174a78;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.2s ease;
+}
+
+.add-announcement-back-button:hover {
+  color: #0f3556;
+  text-decoration: underline;
+}
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+.add-announcement-header {
+  margin-bottom: 24px;
+}
+
+.add-announcement-header h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1d2d3e;
+}
+
+.add-announcement-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #788696;
+}
+
+/* =========================================
+   CARD
+   ========================================= */
+
+.add-announcement-card {
+  width: 100%;
+  padding: 28px;
+  background: #ffffff;
+  border: 1px solid #e5eaf0;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(28, 48, 74, 0.05);
+}
+
+.add-announcement-card h2 {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d2d3e;
+}
+
+/* =========================================
+   FORM
+   ========================================= */
+
+.add-announcement-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.add-announcement-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-announcement-form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2b3e51;
+}
+
+.add-announcement-required {
+  color: #dc3545;
+}
+
+.add-announcement-form-group input,
+.add-announcement-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1d2d3e;
+  background: #ffffff;
+  border: 1px solid #d5dee7;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.add-announcement-form-group input:focus,
+.add-announcement-form-group textarea:focus {
+  border-color: #174a78;
+  box-shadow: 0 0 0 3px rgba(23, 74, 120, 0.12);
+}
+
+.add-announcement-form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* =========================================
+   ACTIONS
+   ========================================= */
+
+.add-announcement-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.add-announcement-primary-button {
+  background: #174a78;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.add-announcement-primary-button:hover:not(:disabled) {
+  background: #0f3556;
+}
+
+.add-announcement-primary-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.add-announcement-secondary-button {
+  background: transparent;
+  color: #556575;
+  border: 1px solid #cfd9e3;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-announcement-secondary-button:hover:not(:disabled) {
+  background: #f1f4f8;
+  color: #1d2d3e;
+}
+
+/* =========================================
+   ERROR
+   ========================================= */
+
+.add-announcement-error {
+  margin-top: 18px;
+  padding: 12px 16px;
+  background: #fdf2f2;
+  border: 1px solid #f8b4b4;
+  border-radius: 8px;
+  color: #9b1c1c;
+  font-size: 13px;
+  font-weight: 500;
+}

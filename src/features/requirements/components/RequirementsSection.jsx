@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 
 import {
-  getAllRequirements,
+  getRequirementsByTransactionId,
   addRequirement,
   updateRequirement,
   setRequirementActiveStatus,
@@ -49,21 +49,8 @@ function RequirementsSection({
       setLoading(true);
       setErrorMessage("");
 
-      const allRequirements =
-        await getAllRequirements();
-
       const filteredRequirements =
-        allRequirements
-          .filter(
-            (requirement) =>
-              requirement.transactionId ===
-              transactionId
-          )
-          .sort(
-            (a, b) =>
-              (a.displayOrder || 0) -
-              (b.displayOrder || 0)
-          );
+        await getRequirementsByTransactionId(transactionId);
 
       setRequirements(
         filteredRequirements
@@ -94,23 +81,10 @@ function RequirementsSection({
 
     const fetchRequirements = async () => {
       try {
-        const allRequirements =
-          await getAllRequirements();
+        const filteredRequirements =
+          await getRequirementsByTransactionId(transactionId);
 
         if (!ignore) {
-          const filteredRequirements =
-            allRequirements
-              .filter(
-                (requirement) =>
-                  requirement.transactionId ===
-                  transactionId
-              )
-              .sort(
-                (a, b) =>
-                  (a.displayOrder || 0) -
-                  (b.displayOrder || 0)
-              );
-
           setRequirements(
             filteredRequirements
           );
