@@ -26,6 +26,7 @@ dist-ssr
 # Environment and secrets
 .env
 .env.*
+!.env.example
 *.pem
 *.key
 serviceAccountKey.json

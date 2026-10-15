@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { loginAdmin } from "../services/authService";
+import logoImg from "../../../assets/logo.png";
 import "../components/LoginPage.css";
 
 function LoginPage() {
@@ -92,7 +93,11 @@ function LoginPage() {
         <div className="login-header">
 
           <div className="login-logo">
-            E
+            <img
+              src={logoImg}
+              alt="E-ReQuest Logo"
+              className="login-logo-img"
+            />
           </div>
 
           <h1>E-ReQuest</h1>

@@ -5,6 +5,7 @@ import {
 } from "react-router-dom";
 
 import { logoutAdmin } from "../features/auth/services/authService";
+import logoImg from "../assets/logo.png";
 
 import "./AdminLayout.css";
 
@@ -159,7 +160,11 @@ function AdminLayout() {
         <div className="admin-sidebar-brand">
 
           <div className="admin-sidebar-logo">
-            E
+            <img
+              src={logoImg}
+              alt="E-ReQuest Logo"
+              className="admin-sidebar-logo-img"
+            />
           </div>
 
 
