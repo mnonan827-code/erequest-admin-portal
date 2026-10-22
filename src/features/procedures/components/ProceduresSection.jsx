@@ -658,17 +658,19 @@ function ProceduresSection({
           </div>
 
 
-          <button
-            type="button"
-            className="transaction-primary-button"
-            onClick={handleAddProcedure}
-            disabled={
-              saving ||
-              deletingId !== null
-            }
-          >
-            + Add Step
-          </button>
+          {!showForm && (
+            <button
+              type="button"
+              className="transaction-primary-button"
+              onClick={handleAddProcedure}
+              disabled={
+                saving ||
+                deletingId !== null
+              }
+            >
+              + Add Step
+            </button>
+          )}
 
         </div>
 

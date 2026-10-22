@@ -33,9 +33,10 @@ export const PRODUCTION_FIREBASE_CONFIG = {
  * }}
  */
 export function resolveFirebaseConfig(env = {}) {
+  const rawUseEmulators = env.VITE_USE_FIREBASE_EMULATORS;
   const useEmulators =
-    env.VITE_USE_FIREBASE_EMULATORS === "true" ||
-    env.VITE_USE_FIREBASE_EMULATORS === true;
+    rawUseEmulators === true ||
+    String(rawUseEmulators ?? "").trim().toLowerCase() === "true";
 
   if (!useEmulators) {
     return {
@@ -142,6 +143,8 @@ if (resolved.isEmulator && resolved.emulator) {
       { cause: error }
     );
   }
+} else if (typeof window !== "undefined") {
+  window.__FIREBASE_EMULATOR_ACTIVE__ = false;
 }
 
 export default app;

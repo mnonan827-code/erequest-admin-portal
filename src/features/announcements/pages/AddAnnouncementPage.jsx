@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   getAllAnnouncements,
-  addAnnouncement
+  addAnnouncement,
+  updateAnnouncement
 } from "../services/announcementService";
 
 import "../components/AddAnnouncementPage.css";
@@ -11,28 +12,59 @@ import "../components/AddAnnouncementPage.css";
 
 function AddAnnouncementPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { announcementId } = useParams();
+  const isEditMode = Boolean(announcementId);
 
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [displayOrder, setDisplayOrder] = useState("");
+  const [title, setTitle] = useState(
+    () => location.state?.announcement?.title || ""
+  );
+  const [message, setMessage] = useState(
+    () => location.state?.announcement?.message || ""
+  );
+  const [displayOrder, setDisplayOrder] = useState(
+    () =>
+      location.state?.announcement?.displayOrder != null
+        ? String(location.state.announcement.displayOrder)
+        : ""
+  );
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(
+    () => !isEditMode || !location.state?.announcement
+  );
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   /* =========================================================
-     LOAD INITIAL DISPLAY ORDER
+     LOAD INITIAL DISPLAY ORDER OR ANNOUNCEMENT DETAILS
      ========================================================= */
 
   useEffect(() => {
     let ignore = false;
 
-    const loadInitialOrder = async () => {
+    const loadAnnouncementData = async () => {
       try {
-        setLoading(true);
-        const data = await getAllAnnouncements();
+        if (!isEditMode || !location.state?.announcement) {
+          setLoading(true);
+        }
+        setErrorMessage("");
 
-        if (!ignore) {
+        const data = await getAllAnnouncements();
+        if (ignore) return;
+
+        if (isEditMode) {
+          const existing = data.find((item) => item.id === announcementId);
+          if (!existing) {
+            setErrorMessage("Announcement not found.");
+            return;
+          }
+
+          setTitle(existing.title || "");
+          setMessage(existing.message || "");
+          setDisplayOrder(
+            existing.displayOrder != null ? String(existing.displayOrder) : "1"
+          );
+        } else {
           const maxOrder = data.reduce(
             (max, item) => Math.max(max, Number(item.displayOrder) || 0),
             0
@@ -40,9 +72,13 @@ function AddAnnouncementPage() {
           setDisplayOrder(String(maxOrder + 1));
         }
       } catch (error) {
-        console.error("Failed to load existing announcements:", error);
+        console.error("Failed to load announcement data:", error);
         if (!ignore) {
-          setDisplayOrder("1");
+          if (isEditMode) {
+            setErrorMessage("Unable to load announcement details.");
+          } else {
+            setDisplayOrder("1");
+          }
         }
       } finally {
         if (!ignore) {
@@ -51,12 +87,12 @@ function AddAnnouncementPage() {
       }
     };
 
-    loadInitialOrder();
+    loadAnnouncementData();
 
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [isEditMode, announcementId, location.state]);
 
   /* =========================================================
      NAVIGATION
@@ -67,7 +103,7 @@ function AddAnnouncementPage() {
   };
 
   /* =========================================================
-     SUBMIT
+     SUBMIT (ADD OR UPDATE)
      ========================================================= */
 
   const handleSubmit = async (event) => {
@@ -97,20 +133,34 @@ function AddAnnouncementPage() {
     try {
       setSaving(true);
 
-      await addAnnouncement(cleanTitle, cleanMessage, orderNum);
+      if (isEditMode) {
+        await updateAnnouncement(
+          announcementId,
+          cleanTitle,
+          cleanMessage,
+          orderNum
+        );
 
-      /* Clear and return to announcements list */
-      setTitle("");
-      setMessage("");
-      setDisplayOrder("");
+        navigate("/announcements", {
+          replace: true,
+          state: {
+            successMessage: `Announcement "${cleanTitle}" was updated successfully.`
+          }
+        });
+      } else {
+        await addAnnouncement(cleanTitle, cleanMessage, orderNum);
 
-      navigate("/announcements", {
-        replace: true,
-        state: {
-          successMessage: `Announcement "${cleanTitle}" was added successfully.`
-        }
-      });
+        setTitle("");
+        setMessage("");
+        setDisplayOrder("");
 
+        navigate("/announcements", {
+          replace: true,
+          state: {
+            successMessage: `Announcement "${cleanTitle}" was added successfully.`
+          }
+        });
+      }
     } catch (error) {
       console.error("Failed to save announcement:", error);
       setErrorMessage(
@@ -134,15 +184,18 @@ function AddAnnouncementPage() {
           type="button"
           className="add-announcement-back-button"
           onClick={handleBack}
+          disabled={saving}
         >
           <span aria-hidden="true">←</span> Back to Announcements
         </button>
 
         {/* HEADER */}
         <header className="add-announcement-header">
-          <h1>Add Announcement</h1>
+          <h1>{isEditMode ? "Edit Announcement" : "Add Announcement"}</h1>
           <p>
-            Create an announcement to display to students in the E-ReQuest application.
+            {isEditMode
+              ? "Update the announcement details shown to students in the E-ReQuest application."
+              : "Create an announcement to display to students in the E-ReQuest application."}
           </p>
         </header>
 
@@ -180,7 +233,7 @@ function AddAnnouncementPage() {
                   placeholder="Example: Registrar Office Maintenance"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  disabled={saving}
+                  disabled={saving || loading}
                   required
                   autoFocus
                 />
@@ -196,7 +249,7 @@ function AddAnnouncementPage() {
                   placeholder="Enter announcement message"
                   value={message}
                   onChange={(event) => setMessage(event.target.value)}
-                  disabled={saving}
+                  disabled={saving || loading}
                   rows="6"
                   required
                 />
@@ -211,7 +264,11 @@ function AddAnnouncementPage() {
                 className="add-announcement-primary-button"
                 disabled={saving || loading}
               >
-                {saving ? "Saving..." : "Add Announcement"}
+                {saving
+                  ? "Saving..."
+                  : isEditMode
+                    ? "Save Changes"
+                    : "Add Announcement"}
               </button>
 
               <button

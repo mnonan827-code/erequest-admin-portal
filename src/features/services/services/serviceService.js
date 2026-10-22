@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   updateDoc,
   deleteDoc,
@@ -272,19 +273,14 @@ export async function setServiceActiveStatus(
    * its actual name in the activity log.
    */
 
-  const services =
-    await getAllServices();
-
-
-  const service =
-    services.find(
-      (item) =>
-        item.id === serviceId
+  const serviceSnap =
+    await getDoc(
+      serviceRef
     );
 
 
   const serviceName =
-    service?.name ||
+    (serviceSnap.exists() && serviceSnap.data()?.name) ||
     "Service";
 
 
@@ -406,28 +402,23 @@ export async function deleteService(
    * be able to retrieve its name.
    */
 
-  const services =
-    await getAllServices();
-
-
-  const service =
-    services.find(
-      (item) =>
-        item.id === serviceId
-    );
-
-
-  const serviceName =
-    service?.name ||
-    "Service";
-
-
   const serviceRef =
     doc(
       db,
       SERVICES_COLLECTION,
       serviceId
     );
+
+
+  const serviceSnap =
+    await getDoc(
+      serviceRef
+    );
+
+
+  const serviceName =
+    (serviceSnap.exists() && serviceSnap.data()?.name) ||
+    "Service";
 
 
   await deleteDoc(

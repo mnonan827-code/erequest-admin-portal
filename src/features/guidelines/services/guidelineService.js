@@ -282,29 +282,31 @@ export async function setGuidelineActiveStatus(
     );
   }
 
-  /*
-   * Get guideline information first.
-   */
-  const guidelines = await getAllGuidelines();
-
-  const guideline = guidelines.find(
-    (item) => item.id === guidelineId
-  );
-
-  const guidelineName =
-    guideline?.guidelineText || "Guideline";
-
-  const transactionId =
-    guideline?.transactionId || "";
-
-  const transactionName =
-    await getTransactionName(transactionId);
-
   const guidelineRef = doc(
     db,
     GUIDELINES_COLLECTION,
     guidelineId
   );
+
+  /*
+   * Get guideline information first.
+   */
+  const guidelineSnap =
+    await getDoc(guidelineRef);
+
+  const guidelineData =
+    guidelineSnap.exists()
+      ? guidelineSnap.data()
+      : null;
+
+  const guidelineName =
+    guidelineData?.guidelineText || "Guideline";
+
+  const transactionId =
+    guidelineData?.transactionId || "";
+
+  const transactionName =
+    await getTransactionName(transactionId);
 
   await updateDoc(guidelineRef, {
     isActive,
@@ -340,29 +342,31 @@ export async function deleteGuideline(guidelineId) {
     );
   }
 
-  /*
-   * Get information BEFORE deletion.
-   */
-  const guidelines = await getAllGuidelines();
-
-  const guideline = guidelines.find(
-    (item) => item.id === guidelineId
-  );
-
-  const guidelineName =
-    guideline?.guidelineText || "Guideline";
-
-  const transactionId =
-    guideline?.transactionId || "";
-
-  const transactionName =
-    await getTransactionName(transactionId);
-
   const guidelineRef = doc(
     db,
     GUIDELINES_COLLECTION,
     guidelineId
   );
+
+  /*
+   * Get information BEFORE deletion.
+   */
+  const guidelineSnap =
+    await getDoc(guidelineRef);
+
+  const guidelineData =
+    guidelineSnap.exists()
+      ? guidelineSnap.data()
+      : null;
+
+  const guidelineName =
+    guidelineData?.guidelineText || "Guideline";
+
+  const transactionId =
+    guidelineData?.transactionId || "";
+
+  const transactionName =
+    await getTransactionName(transactionId);
 
   await deleteDoc(guidelineRef);
 

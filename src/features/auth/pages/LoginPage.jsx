@@ -2,8 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { loginAdmin } from "../services/authService";
-import logoImg from "../../../assets/logo.png";
 import "../components/LoginPage.css";
+
+const OFFICIAL_LOGO_URL = `${import.meta.env.BASE_URL}logo.png`;
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -57,6 +58,8 @@ function LoginPage() {
           break;
 
         case "auth/invalid-credential":
+        case "auth/user-not-found":
+        case "auth/wrong-password":
           setErrorMessage(
             "Incorrect email or password."
           );
@@ -71,6 +74,12 @@ function LoginPage() {
         case "auth/too-many-requests":
           setErrorMessage(
             "Too many login attempts. Please try again later."
+          );
+          break;
+
+        case "auth/network-request-failed":
+          setErrorMessage(
+            "Network error while connecting to Firebase. Please check your internet connection and try again."
           );
           break;
 
@@ -94,7 +103,7 @@ function LoginPage() {
 
           <div className="login-logo">
             <img
-              src={logoImg}
+              src={OFFICIAL_LOGO_URL}
               alt="E-ReQuest Logo"
               className="login-logo-img"
             />

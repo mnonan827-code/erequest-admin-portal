@@ -113,20 +113,17 @@ function ProtectedRoute() {
   if (loading) {
 
     return (
-      <div
-        style={{
-          width: "100%",
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#ffffff",
-          color: "#244f7c",
-          fontFamily:
-            "Inter, Arial, Helvetica, sans-serif"
-        }}
-      >
-        Checking administrator access...
+      <div className="admin-splash-screen">
+        <div className="admin-splash-logo-container">
+          <img
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="E-ReQuest Logo"
+            className="admin-splash-logo-img"
+          />
+        </div>
+        <div className="admin-splash-text">
+          Checking administrator access...
+        </div>
       </div>
     );
 

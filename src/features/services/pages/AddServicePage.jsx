@@ -1,19 +1,81 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { addService } from "../services/serviceService";
+import {
+  getAllServices,
+  addService,
+  updateService
+} from "../services/serviceService";
 
 import "../components/AddServicePage.css";
 
 
 function AddServicePage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { serviceId } = useParams();
+  const isEditMode = Boolean(serviceId);
 
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(
+    () => location.state?.service?.name || ""
+  );
+  const [description, setDescription] = useState(
+    () => location.state?.service?.description || ""
+  );
 
+  const [loading, setLoading] = useState(
+    () => isEditMode && !location.state?.service
+  );
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  /* =========================================================
+     LOAD SERVICE DETAILS WHEN EDITING
+     ========================================================= */
+
+  useEffect(() => {
+    if (!isEditMode) {
+      return;
+    }
+
+    let ignore = false;
+
+    const loadService = async () => {
+      try {
+        if (!location.state?.service) {
+          setLoading(true);
+        }
+        setErrorMessage("");
+
+        const services = await getAllServices();
+        if (ignore) return;
+
+        const existing = services.find((item) => item.id === serviceId);
+        if (!existing) {
+          setErrorMessage("Service not found.");
+          return;
+        }
+
+        setName(existing.name || "");
+        setDescription(existing.description || "");
+      } catch (error) {
+        console.error("Failed to load service:", error);
+        if (!ignore) {
+          setErrorMessage("Unable to load service details.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadService();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isEditMode, serviceId, location.state]);
 
   /* =========================================================
      NAVIGATION
@@ -24,7 +86,7 @@ function AddServicePage() {
   };
 
   /* =========================================================
-     HANDLE SUBMIT
+     HANDLE SUBMIT (ADD OR UPDATE)
      ========================================================= */
 
   const handleSubmit = async (event) => {
@@ -41,24 +103,30 @@ function AddServicePage() {
     try {
       setSaving(true);
 
-      await addService(trimmedName, description);
+      if (isEditMode) {
+        await updateService(serviceId, trimmedName, description);
 
-      /*
-       * Clear form and navigate back to Services list
-       * with a success message state.
-       */
-      setName("");
-      setDescription("");
+        navigate("/services", {
+          replace: true,
+          state: {
+            successMessage: `Service "${trimmedName}" was updated successfully.`
+          }
+        });
+      } else {
+        await addService(trimmedName, description);
 
-      navigate("/services", {
-        replace: true,
-        state: {
-          successMessage: `Service "${trimmedName}" was added successfully.`
-        }
-      });
+        setName("");
+        setDescription("");
 
+        navigate("/services", {
+          replace: true,
+          state: {
+            successMessage: `Service "${trimmedName}" was added successfully.`
+          }
+        });
+      }
     } catch (error) {
-      console.error("Failed to add service:", error);
+      console.error("Failed to save service:", error);
 
       setErrorMessage(
         error.message || "Unable to save service. Please try again."
@@ -81,15 +149,18 @@ function AddServicePage() {
           type="button"
           className="add-service-back-button"
           onClick={handleBack}
+          disabled={saving}
         >
           <span aria-hidden="true">←</span> Back to Services
         </button>
 
         {/* HEADER */}
         <header className="add-service-header">
-          <h1>Add Service</h1>
+          <h1>{isEditMode ? "Edit Service" : "Add Service"}</h1>
           <p>
-            Create a new department or service category for E-ReQuest.
+            {isEditMode
+              ? "Update the department or service category details for E-ReQuest."
+              : "Create a new department or service category for E-ReQuest."}
           </p>
         </header>
 
@@ -114,7 +185,7 @@ function AddServicePage() {
                   placeholder="Example: Registrar"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  disabled={saving}
+                  disabled={saving || loading}
                   autoFocus
                 />
               </div>
@@ -129,7 +200,7 @@ function AddServicePage() {
                   placeholder="Enter service description"
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  disabled={saving}
+                  disabled={saving || loading}
                   rows="4"
                 />
               </div>
@@ -141,9 +212,13 @@ function AddServicePage() {
               <button
                 type="submit"
                 className="add-service-primary-button"
-                disabled={saving}
+                disabled={saving || loading}
               >
-                {saving ? "Saving..." : "Add Service"}
+                {saving
+                  ? "Saving..."
+                  : isEditMode
+                    ? "Save Changes"
+                    : "Add Service"}
               </button>
 
               <button

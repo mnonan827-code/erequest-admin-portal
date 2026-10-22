@@ -325,35 +325,36 @@ export async function setProcedureStepActiveStatus(
     );
   }
 
-  /*
-   * Get procedure information first so
-   * Recent Updates knows the instruction,
-   * step number and transaction.
-   */
-  const procedures =
-    await getAllProcedureSteps();
-
-  const procedure = procedures.find(
-    (item) => item.id === procedureId
-  );
-
-  const instruction =
-    procedure?.instruction || "Procedure Step";
-
-  const stepNumber =
-    procedure?.stepNumber || "";
-
-  const transactionId =
-    procedure?.transactionId || "";
-
-  const transactionName =
-    await getTransactionName(transactionId);
-
   const procedureRef = doc(
     db,
     PROCEDURES_COLLECTION,
     procedureId
   );
+
+  /*
+   * Get procedure information first so
+   * Recent Updates knows the instruction,
+   * step number and transaction.
+   */
+  const procedureSnap =
+    await getDoc(procedureRef);
+
+  const procedureData =
+    procedureSnap.exists()
+      ? procedureSnap.data()
+      : null;
+
+  const instruction =
+    procedureData?.instruction || "Procedure Step";
+
+  const stepNumber =
+    procedureData?.stepNumber || "";
+
+  const transactionId =
+    procedureData?.transactionId || "";
+
+  const transactionName =
+    await getTransactionName(transactionId);
 
   await updateDoc(procedureRef, {
     isActive,
@@ -393,34 +394,35 @@ export async function deleteProcedureStep(
     );
   }
 
-  /*
-   * Get procedure information BEFORE
-   * deleting the Firestore document.
-   */
-  const procedures =
-    await getAllProcedureSteps();
-
-  const procedure = procedures.find(
-    (item) => item.id === procedureId
-  );
-
-  const instruction =
-    procedure?.instruction || "Procedure Step";
-
-  const stepNumber =
-    procedure?.stepNumber || "";
-
-  const transactionId =
-    procedure?.transactionId || "";
-
-  const transactionName =
-    await getTransactionName(transactionId);
-
   const procedureRef = doc(
     db,
     PROCEDURES_COLLECTION,
     procedureId
   );
+
+  /*
+   * Get procedure information BEFORE
+   * deleting the Firestore document.
+   */
+  const procedureSnap =
+    await getDoc(procedureRef);
+
+  const procedureData =
+    procedureSnap.exists()
+      ? procedureSnap.data()
+      : null;
+
+  const instruction =
+    procedureData?.instruction || "Procedure Step";
+
+  const stepNumber =
+    procedureData?.stepNumber || "";
+
+  const transactionId =
+    procedureData?.transactionId || "";
+
+  const transactionName =
+    await getTransactionName(transactionId);
 
   await deleteDoc(procedureRef);
 

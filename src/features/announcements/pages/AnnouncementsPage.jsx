@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   getAllAnnouncements,
-  addAnnouncement,
-  updateAnnouncement,
   setAnnouncementActiveStatus,
   deleteAnnouncement
 } from "../services/announcementService";
@@ -30,13 +28,6 @@ function AnnouncementsPage() {
   const [successMessage, setSuccessMessage] = useState(
     () => location.state?.successMessage || ""
   );
-
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [displayOrder, setDisplayOrder] = useState("");
-
-  const [editingAnnouncement, setEditingAnnouncement] =
-    useState(null);
 
   /* CLEAR NAVIGATION STATE */
   useEffect(() => {
@@ -130,19 +121,6 @@ function AnnouncementsPage() {
 
 
   /* =========================================================
-     RESET FORM
-     ========================================================= */
-
-  const resetForm = () => {
-    setTitle("");
-    setMessage("");
-    setDisplayOrder("");
-
-    setEditingAnnouncement(null);
-  };
-
-
-  /* =========================================================
      ADD
      ========================================================= */
 
@@ -152,127 +130,13 @@ function AnnouncementsPage() {
 
 
   /* =========================================================
-     EDIT
+     EDIT (NAVIGATES TO DEDICATED EDIT PAGE)
      ========================================================= */
 
-  const handleEdit = (
-    announcement
-  ) => {
-    setTitle(
-      announcement.title || ""
-    );
-
-    setMessage(
-      announcement.message || ""
-    );
-
-    setDisplayOrder(
-      announcement.displayOrder?.toString() ||
-        ""
-    );
-
-    setEditingAnnouncement(
-      announcement
-    );
-
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+  const handleEdit = (announcement) => {
+    navigate(`/announcements/edit/${announcement.id}`, {
+      state: { announcement }
     });
-  };
-
-
-  /* =========================================================
-     SAVE
-     ========================================================= */
-
-  const handleSubmit = async (
-    event
-  ) => {
-    event.preventDefault();
-
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    if (!title.trim()) {
-      setErrorMessage(
-        "Announcement title is required."
-      );
-
-      return;
-    }
-
-    if (!message.trim()) {
-      setErrorMessage(
-        "Announcement message is required."
-      );
-
-      return;
-    }
-
-    if (
-      !displayOrder ||
-      Number(displayOrder) < 1
-    ) {
-      setErrorMessage(
-        "Display order must be greater than 0."
-      );
-
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      if (editingAnnouncement) {
-        await updateAnnouncement(
-          editingAnnouncement.id,
-          title,
-          message,
-          displayOrder
-        );
-
-        setSuccessMessage(
-          "Announcement updated successfully."
-        );
-
-      } else {
-        await addAnnouncement(
-          title,
-          message,
-          displayOrder
-        );
-
-        setSuccessMessage(
-          "Announcement added successfully."
-        );
-      }
-
-      setTitle("");
-      setMessage("");
-      setDisplayOrder("");
-
-      setEditingAnnouncement(null);
-
-      await loadAnnouncements();
-
-    } catch (error) {
-      console.error(
-        "Failed to save announcement:",
-        error
-      );
-
-      setErrorMessage(
-        error.message ||
-          "Unable to save announcement."
-      );
-
-    } finally {
-      setSaving(false);
-    }
   };
 
 
@@ -328,11 +192,6 @@ function AnnouncementsPage() {
   const handleDelete = (
     announcement
   ) => {
-    console.log(
-      "ANNOUNCEMENT DELETE CLICKED:",
-      announcement
-    );
-
     setAnnouncementToDelete(
       announcement
     );
@@ -377,13 +236,6 @@ function AnnouncementsPage() {
           announcementToDelete.id
         );
 
-        if (
-          editingAnnouncement?.id ===
-          announcementToDelete.id
-        ) {
-          resetForm();
-        }
-
         setSuccessMessage(
           "Announcement deleted successfully."
         );
@@ -418,19 +270,6 @@ function AnnouncementsPage() {
       <div className="announcements-page">
 
         <div className="announcements-container">
-
-          {/* BACK BUTTON */}
-
-          <button
-            type="button"
-            className="announcements-back-button"
-            onClick={() =>
-              navigate("/dashboard")
-            }
-          >
-            ← Back to Dashboard
-          </button>
-
 
           {/* HEADER */}
 
@@ -478,129 +317,6 @@ function AnnouncementsPage() {
             <div className="announcement-success">
               {successMessage}
             </div>
-          )}
-
-
-          {/* EDIT FORM (ONLY WHEN EDITING) */}
-
-          {editingAnnouncement && (
-            <section className="announcement-card">
-
-              <h2>
-                Edit Announcement
-              </h2>
-
-
-              <form onSubmit={handleSubmit}>
-
-                <div className="announcement-form-grid">
-
-                  {/* DISPLAY ORDER */}
-
-                  <div className="announcement-form-group">
-
-                    <label htmlFor="displayOrder">
-                      Display Order
-                    </label>
-
-                    <input
-                      id="displayOrder"
-                      type="number"
-                      min="1"
-                      value={displayOrder}
-                      onChange={(event) =>
-                        setDisplayOrder(
-                          event.target.value
-                        )
-                      }
-                      disabled={saving}
-                      required
-                    />
-
-                  </div>
-
-
-                  {/* TITLE */}
-
-                  <div className="announcement-form-group full-width">
-
-                    <label htmlFor="announcementTitle">
-                      Title
-                    </label>
-
-                    <input
-                      id="announcementTitle"
-                      type="text"
-                      placeholder="Example: Registrar Office Closed"
-                      value={title}
-                      onChange={(event) =>
-                        setTitle(
-                          event.target.value
-                        )
-                      }
-                      disabled={saving}
-                      required
-                    />
-
-                  </div>
-
-
-                  {/* MESSAGE */}
-
-                  <div className="announcement-form-group full-width">
-
-                    <label htmlFor="announcementMessage">
-                      Message
-                    </label>
-
-                    <textarea
-                      id="announcementMessage"
-                      placeholder="Enter announcement message"
-                      value={message}
-                      onChange={(event) =>
-                        setMessage(
-                          event.target.value
-                        )
-                      }
-                      disabled={saving}
-                      rows="5"
-                      required
-                    />
-
-                  </div>
-
-                </div>
-
-
-                {/* FORM BUTTONS */}
-
-                <div className="announcement-form-actions">
-
-                  <button
-                    type="submit"
-                    className="announcement-primary-button"
-                    disabled={saving}
-                  >
-                    {saving
-                      ? "Saving..."
-                      : "Save Changes"}
-                  </button>
-
-
-                  <button
-                    type="button"
-                    className="announcement-secondary-button"
-                    onClick={resetForm}
-                    disabled={saving}
-                  >
-                    Cancel
-                  </button>
-
-                </div>
-
-              </form>
-
-            </section>
           )}
 
 

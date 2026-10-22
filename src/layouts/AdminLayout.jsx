@@ -5,9 +5,10 @@ import {
 } from "react-router-dom";
 
 import { logoutAdmin } from "../features/auth/services/authService";
-import logoImg from "../assets/logo.png";
 
 import "./AdminLayout.css";
+
+const OFFICIAL_LOGO_URL = `${import.meta.env.BASE_URL}logo.png`;
 
 
 /* =========================================================
@@ -161,7 +162,7 @@ function AdminLayout() {
 
           <div className="admin-sidebar-logo">
             <img
-              src={logoImg}
+              src={OFFICIAL_LOGO_URL}
               alt="E-ReQuest Logo"
               className="admin-sidebar-logo-img"
             />
@@ -188,96 +189,96 @@ function AdminLayout() {
             NAVIGATION
             =================================================== */}
 
-       <nav className="admin-sidebar-navigation">
+        <nav className="admin-sidebar-navigation">
 
-  {/* DASHBOARD */}
+          {/* DASHBOARD */}
 
-  <NavLink
-    to="/dashboard"
-    className={({ isActive }) =>
-      isActive
-        ? "admin-nav-item active"
-        : "admin-nav-item"
-    }
-  >
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              isActive
+                ? "admin-nav-item active"
+                : "admin-nav-item"
+            }
+          >
 
-    <span className="admin-nav-icon">
-      <DashboardIcon />
-    </span>
+            <span className="admin-nav-icon">
+              <DashboardIcon />
+            </span>
 
-    <span>
-      Dashboard
-    </span>
+            <span>
+              Dashboard
+            </span>
 
-  </NavLink>
-
-
-  {/* SERVICES */}
-
-  <NavLink
-    to="/services"
-    className={({ isActive }) =>
-      isActive
-        ? "admin-nav-item active"
-        : "admin-nav-item"
-    }
-  >
-
-    <span className="admin-nav-icon">
-      <ServicesIcon />
-    </span>
-
-    <span>
-      Services
-    </span>
-
-  </NavLink>
+          </NavLink>
 
 
-  {/* TRANSACTIONS */}
+          {/* SERVICES */}
 
-  <NavLink
-    to="/transactions"
-    className={({ isActive }) =>
-      isActive
-        ? "admin-nav-item active"
-        : "admin-nav-item"
-    }
-  >
+          <NavLink
+            to="/services"
+            className={({ isActive }) =>
+              isActive
+                ? "admin-nav-item active"
+                : "admin-nav-item"
+            }
+          >
 
-    <span className="admin-nav-icon">
-      <TransactionsIcon />
-    </span>
+            <span className="admin-nav-icon">
+              <ServicesIcon />
+            </span>
 
-    <span>
-      Transactions
-    </span>
+            <span>
+              Services
+            </span>
 
-  </NavLink>
+          </NavLink>
 
 
-  {/* ANNOUNCEMENTS */}
+          {/* TRANSACTIONS */}
 
-  <NavLink
-    to="/announcements"
-    className={({ isActive }) =>
-      isActive
-        ? "admin-nav-item active"
-        : "admin-nav-item"
-    }
-  >
+          <NavLink
+            to="/transactions"
+            className={({ isActive }) =>
+              isActive
+                ? "admin-nav-item active"
+                : "admin-nav-item"
+            }
+          >
 
-    <span className="admin-nav-icon">
-      <AnnouncementIcon />
-    </span>
+            <span className="admin-nav-icon">
+              <TransactionsIcon />
+            </span>
 
-    <span>
-      Announcements
-    </span>
+            <span>
+              Transactions
+            </span>
 
-  </NavLink>
+          </NavLink>
 
-</nav>
+
+          {/* ANNOUNCEMENTS */}
+
+          <NavLink
+            to="/announcements"
+            className={({ isActive }) =>
+              isActive
+                ? "admin-nav-item active"
+                : "admin-nav-item"
+            }
+          >
+
+            <span className="admin-nav-icon">
+              <AnnouncementIcon />
+            </span>
+
+            <span>
+              Announcements
+            </span>
+
+          </NavLink>
+
+        </nav>
 
 
         {/* ===================================================

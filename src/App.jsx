@@ -51,19 +51,17 @@ const RequirementsPage =
 
 function RouteLoadingFallback() {
   return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "60vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#244f7c",
-        fontFamily: "Inter, Arial, Helvetica, sans-serif",
-        fontSize: "15px"
-      }}
-    >
-      Loading...
+    <div className="admin-splash-screen" style={{ minHeight: "60vh", background: "transparent" }}>
+      <div className="admin-splash-logo-container" style={{ width: "54px", height: "54px" }}>
+        <img
+          src={`${import.meta.env.BASE_URL}logo.png`}
+          alt="E-ReQuest Logo"
+          className="admin-splash-logo-img"
+        />
+      </div>
+      <div className="admin-splash-text" style={{ fontSize: "14px" }}>
+        Loading...
+      </div>
     </div>
   );
 }
@@ -137,6 +135,14 @@ function App() {
             />
 
 
+            {/* EDIT SERVICE */}
+
+            <Route
+              path="/services/edit/:serviceId"
+              element={<AddServicePage />}
+            />
+
+
             {/* TRANSACTIONS */}
 
             <Route
@@ -189,6 +195,14 @@ function App() {
 
             <Route
               path="/announcements/add"
+              element={<AddAnnouncementPage />}
+            />
+
+
+            {/* EDIT ANNOUNCEMENT */}
+
+            <Route
+              path="/announcements/edit/:announcementId"
               element={<AddAnnouncementPage />}
             />
 

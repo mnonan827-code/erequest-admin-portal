@@ -1,5 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useState
+} from "react";
+import {
+  useLocation,
+  useNavigate
+} from "react-router-dom";
 
 import {
   getAllTransactions,
@@ -16,6 +23,7 @@ import "../components/TransactionsPage.css";
 
 function TransactionsPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [transactions, setTransactions] =
     useState([]);
@@ -45,13 +53,26 @@ function TransactionsPage() {
     useState("");
 
   const [successMessage, setSuccessMessage] =
-    useState("");
+    useState(
+      () => location.state?.successMessage || ""
+    );
 
   const [serviceFilter, setServiceFilter] =
     useState("");
 
   const [searchQuery, setSearchQuery] =
     useState("");
+
+
+  /* =========================================================
+     CLEAR NAVIGATION STATE
+     ========================================================= */
+
+  useEffect(() => {
+    if (location.state?.successMessage) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
 
   /* =========================================================
@@ -139,27 +160,12 @@ function TransactionsPage() {
      NAVIGATION
      ========================================================= */
 
-  const handleBackToDashboard = () => {
-    navigate("/dashboard");
-  };
-
-
   const handleAddTransaction = () => {
     navigate("/transactions/add");
   };
 
-
-  const handleEdit = (transaction) => {
-    navigate(
-      `/transactions/edit/${transaction.id}`
-    );
-  };
-
-
-  const handleManage = (transaction) => {
-    navigate(
-      `/transactions/manage/${transaction.id}`
-    );
+  const handleOpenEditManage = (transaction) => {
+    navigate(`/transactions/edit/${transaction.id}`);
   };
 
 
@@ -184,7 +190,7 @@ function TransactionsPage() {
 
 
   /* =========================================================
-     ACTIVATE / DEACTIVATE
+     ACTIVATE / DEACTIVATE (SMOOTH STATE TOGGLE)
      ========================================================= */
 
   const handleStatusChange = async (
@@ -201,16 +207,25 @@ function TransactionsPage() {
       setErrorMessage("");
       setSuccessMessage("");
 
+      /* Optimistic local state update for smooth UI feedback */
+      setTransactions((prev) =>
+        prev.map((item) =>
+          item.id === transaction.id
+            ? { ...item, isActive: newStatus }
+            : item
+        )
+      );
+
       await setTransactionActiveStatus(
         transaction.id,
         newStatus
       );
 
-      setSuccessMessage(
-        newStatus
-          ? `${transaction.name} activated successfully.`
-          : `${transaction.name} deactivated successfully.`
-      );
+      const statusMsg = newStatus
+        ? `${transaction.name} activated successfully.`
+        : `${transaction.name} deactivated successfully.`;
+
+      setSuccessMessage(statusMsg);
 
       await loadData();
 
@@ -220,9 +235,14 @@ function TransactionsPage() {
         error
       );
 
-      setErrorMessage(
-        "Unable to update transaction status."
-      );
+      /* Rollback optimistic update on failure */
+      await loadData();
+
+      const errMsg =
+        error.message ||
+        "Unable to update transaction status.";
+
+      setErrorMessage(errMsg);
 
     } finally {
       setUpdatingId(null);
@@ -244,7 +264,9 @@ function TransactionsPage() {
       setUpdatingId(transaction.id);
 
       const counts =
-        await getTransactionChildCounts(transaction.id);
+        await getTransactionChildCounts(
+          transaction.id
+        );
 
       if (counts.total > 0) {
         const details = [];
@@ -318,20 +340,21 @@ function TransactionsPage() {
       return;
     }
 
+    const targetId =
+      transactionToDelete.id;
+    const targetName =
+      transactionToDelete.name;
+
     try {
-      setDeletingId(
-        transactionToDelete.id
-      );
+      setDeletingId(targetId);
 
       setErrorMessage("");
       setSuccessMessage("");
 
-      await deleteTransaction(
-        transactionToDelete.id
-      );
+      await deleteTransaction(targetId);
 
       setSuccessMessage(
-        `${transactionToDelete.name} deleted successfully.`
+        `${targetName} deleted successfully.`
       );
 
       setTransactionToDelete(null);
@@ -344,10 +367,11 @@ function TransactionsPage() {
         error
       );
 
-      setErrorMessage(
+      const errMsg =
         error.message ||
-        "Unable to delete transaction."
-      );
+        "Unable to delete transaction.";
+
+      setErrorMessage(errMsg);
 
     } finally {
       setDeletingId(null);
@@ -361,20 +385,34 @@ function TransactionsPage() {
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter((transaction) => {
-      if (serviceFilter && transaction.serviceId !== serviceFilter) {
+      if (
+        serviceFilter &&
+        transaction.serviceId !== serviceFilter
+      ) {
         return false;
       }
 
       if (searchQuery.trim()) {
-        const clean = searchQuery.toLowerCase().trim();
+        const clean =
+          searchQuery.toLowerCase().trim();
         const service = services.find(
           (s) => s.id === transaction.serviceId
         );
-        const serviceName = (service?.name || "").toLowerCase();
-        const name = (transaction.name || "").toLowerCase();
-        const desc = (transaction.description || "").toLowerCase();
-        const office = (transaction.officeName || "").toLowerCase();
-        const schedule = (transaction.officeSchedule || "").toLowerCase();
+        const serviceName = (
+          service?.name || ""
+        ).toLowerCase();
+        const name = (
+          transaction.name || ""
+        ).toLowerCase();
+        const desc = (
+          transaction.description || ""
+        ).toLowerCase();
+        const office = (
+          transaction.officeName || ""
+        ).toLowerCase();
+        const schedule = (
+          transaction.officeSchedule || ""
+        ).toLowerCase();
 
         const match =
           name.includes(clean) ||
@@ -390,7 +428,12 @@ function TransactionsPage() {
 
       return true;
     });
-  }, [transactions, serviceFilter, searchQuery, services]);
+  }, [
+    transactions,
+    serviceFilter,
+    searchQuery,
+    services
+  ]);
 
 
   /* =========================================================
@@ -401,33 +444,6 @@ function TransactionsPage() {
     <div className="transactions-page">
 
       <div className="transactions-container">
-
-        {/* BACK TO DASHBOARD */}
-
-        <button
-          type="button"
-          onClick={handleBackToDashboard}
-          style={{
-            background: "transparent",
-            border: "none",
-            padding: "0",
-            marginBottom: "18px",
-            color: "#174a78",
-            fontSize: "15px",
-            fontWeight: "600",
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px"
-          }}
-        >
-          <span aria-hidden="true">
-            ←
-          </span>
-
-          Back to Dashboard
-        </button>
-
 
         {/* HEADER */}
 
@@ -528,18 +544,19 @@ function TransactionsPage() {
               </h2>
 
               <p>
-                Select a transaction to manage or
-                edit its information.
+                Select a transaction to edit its
+                information, requirements, procedures,
+                and guidelines, or update its status.
               </p>
             </div>
 
 
-            {/* FILTER */}
+            {/* SERVICE FILTER */}
 
-            <div className="transaction-service-filter">
+            <div className="transaction-filter">
 
               <label htmlFor="serviceFilter">
-                Service
+                Filter by Service
               </label>
 
               <select
@@ -572,8 +589,6 @@ function TransactionsPage() {
           </div>
 
 
-          {/* CONTENT */}
-
           {loading ? (
 
             <p className="transactions-state-message">
@@ -583,8 +598,8 @@ function TransactionsPage() {
           ) : filteredTransactions.length === 0 ? (
 
             <p className="transactions-state-message">
-              {searchQuery || serviceFilter
-                ? "No transactions found matching your criteria."
+              {searchQuery
+                ? `No transactions found matching "${searchQuery}".`
                 : "No transactions found."}
             </p>
 
@@ -604,18 +619,18 @@ function TransactionsPage() {
 
                     <div className="transaction-item-top">
 
-                      {/* INFORMATION */}
-
                       <div className="transaction-information">
 
-                        <h3>
-                          {transaction.name}
-                        </h3>
+                        <div className="transaction-title-row">
+                          <h3 className="transaction-title">
+                            {transaction.name}
+                          </h3>
 
-                        <div className="transaction-service">
-                          {getServiceName(
-                            transaction.serviceId
-                          )}
+                          <span className="transaction-service-badge">
+                            {getServiceName(
+                              transaction.serviceId
+                            )}
+                          </span>
                         </div>
 
                         <p className="transaction-description">
@@ -624,7 +639,7 @@ function TransactionsPage() {
                         </p>
 
 
-                        <div className="transaction-office-info">
+                        <div className="transaction-meta">
 
                           <p>
                             <strong>
@@ -666,36 +681,20 @@ function TransactionsPage() {
                     </div>
 
 
-                    {/* ACTION BUTTONS */}
+                    {/* CARD FOOTER ACTION BUTTONS:
+                        1. Edit Info
+                        2. Deactivate / Activate
+                        3. Delete */}
 
                     <div className="transaction-item-actions">
 
-                      {/* MANAGE */}
-
-                      <button
-                        type="button"
-                        className="transaction-manage-button"
-                        onClick={() =>
-                          handleManage(
-                            transaction
-                          )
-                        }
-                        disabled={
-                          deletingId ===
-                          transaction.id
-                        }
-                      >
-                        Manage
-                      </button>
-
-
-                      {/* EDIT */}
+                      {/* 1. EDIT INFO (Opens Unified Edit Transaction View) */}
 
                       <button
                         type="button"
                         className="transaction-edit-button"
                         onClick={() =>
-                          handleEdit(
+                          handleOpenEditManage(
                             transaction
                           )
                         }
@@ -708,7 +707,7 @@ function TransactionsPage() {
                       </button>
 
 
-                      {/* ACTIVATE / DEACTIVATE */}
+                      {/* 2. DEACTIVATE / ACTIVATE */}
 
                       <button
                         type="button"
@@ -734,7 +733,7 @@ function TransactionsPage() {
                       </button>
 
 
-                      {/* DELETE */}
+                      {/* 3. DELETE */}
 
                       <button
                         type="button"
@@ -802,6 +801,5 @@ function TransactionsPage() {
     </div>
   );
 }
-
 
 export default TransactionsPage;

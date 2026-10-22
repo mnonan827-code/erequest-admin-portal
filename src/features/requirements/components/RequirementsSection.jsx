@@ -417,17 +417,19 @@ function RequirementsSection({
           </div>
 
 
-          <button
-            type="button"
-            className="transaction-primary-button"
-            onClick={handleAddRequirement}
-            disabled={
-              saving ||
-              deletingId !== null
-            }
-          >
-            + Add Requirement
-          </button>
+          {!showForm && (
+            <button
+              type="button"
+              className="transaction-primary-button"
+              onClick={handleAddRequirement}
+              disabled={
+                saving ||
+                deletingId !== null
+              }
+            >
+              + Add Requirement
+            </button>
+          )}
 
         </div>
 

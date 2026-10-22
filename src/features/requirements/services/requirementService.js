@@ -300,28 +300,29 @@ export async function setRequirementActiveStatus(
     );
   }
 
-  /* Get requirement before updating */
-  const requirements =
-    await getAllRequirements();
-
-  const requirement = requirements.find(
-    (item) => item.id === requirementId
-  );
-
-  const requirementName =
-    requirement?.requirementText || "Requirement";
-
-  const transactionId =
-    requirement?.transactionId || "";
-
-  const transactionName =
-    await getTransactionName(transactionId);
-
   const requirementRef = doc(
     db,
     REQUIREMENTS_COLLECTION,
     requirementId
   );
+
+  /* Get requirement before updating */
+  const requirementSnap =
+    await getDoc(requirementRef);
+
+  const requirementData =
+    requirementSnap.exists()
+      ? requirementSnap.data()
+      : null;
+
+  const requirementName =
+    requirementData?.requirementText || "Requirement";
+
+  const transactionId =
+    requirementData?.transactionId || "";
+
+  const transactionName =
+    await getTransactionName(transactionId);
 
   await updateDoc(requirementRef, {
     isActive,
@@ -359,30 +360,31 @@ export async function deleteRequirement(
     );
   }
 
-  /*
-   * Get information BEFORE deletion.
-   */
-  const requirements =
-    await getAllRequirements();
-
-  const requirement = requirements.find(
-    (item) => item.id === requirementId
-  );
-
-  const requirementName =
-    requirement?.requirementText || "Requirement";
-
-  const transactionId =
-    requirement?.transactionId || "";
-
-  const transactionName =
-    await getTransactionName(transactionId);
-
   const requirementRef = doc(
     db,
     REQUIREMENTS_COLLECTION,
     requirementId
   );
+
+  /*
+   * Get information BEFORE deletion.
+   */
+  const requirementSnap =
+    await getDoc(requirementRef);
+
+  const requirementData =
+    requirementSnap.exists()
+      ? requirementSnap.data()
+      : null;
+
+  const requirementName =
+    requirementData?.requirementText || "Requirement";
+
+  const transactionId =
+    requirementData?.transactionId || "";
+
+  const transactionName =
+    await getTransactionName(transactionId);
 
   await deleteDoc(requirementRef);
 

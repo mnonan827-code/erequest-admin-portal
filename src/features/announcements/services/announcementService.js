@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   addDoc,
   updateDoc,
@@ -169,22 +170,18 @@ export const setAnnouncementActiveStatus = async (
    * so we know its title for Recent Updates.
    */
 
-  const announcements =
-    await getAllAnnouncements();
-
-  const announcement =
-    announcements.find(
-      (item) => item.id === announcementId
-    );
-
-  const announcementTitle =
-    announcement?.title || "Announcement";
-
   const announcementRef = doc(
     db,
     ANNOUNCEMENTS_COLLECTION,
     announcementId
   );
+
+  const announcementSnap =
+    await getDoc(announcementRef);
+
+  const announcementTitle =
+    (announcementSnap.exists() && announcementSnap.data()?.title) ||
+    "Announcement";
 
   await updateDoc(announcementRef, {
     isActive: Boolean(isActive),
@@ -229,22 +226,18 @@ export const deleteAnnouncement = async (
    * After deletion, we can no longer retrieve its title.
    */
 
-  const announcements =
-    await getAllAnnouncements();
-
-  const announcement =
-    announcements.find(
-      (item) => item.id === announcementId
-    );
-
-  const announcementTitle =
-    announcement?.title || "Announcement";
-
   const announcementRef = doc(
     db,
     ANNOUNCEMENTS_COLLECTION,
     announcementId
   );
+
+  const announcementSnap =
+    await getDoc(announcementRef);
+
+  const announcementTitle =
+    (announcementSnap.exists() && announcementSnap.data()?.title) ||
+    "Announcement";
 
   await deleteDoc(announcementRef);
 

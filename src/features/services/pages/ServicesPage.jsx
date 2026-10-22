@@ -3,8 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   getAllServices,
-  addService,
-  updateService,
   setServiceActiveStatus,
   deleteService,
   getServiceTransactionCount
@@ -21,7 +19,6 @@ function ServicesPage() {
 
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState(
@@ -29,11 +26,6 @@ function ServicesPage() {
   );
 
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-
-  const [editingService, setEditingService] = useState(null);
 
   /* DELETE MODAL */
   const [serviceToDelete, setServiceToDelete] = useState(null);
@@ -130,128 +122,13 @@ function ServicesPage() {
 
 
   /* =========================================================
-     NAVIGATION
-     ========================================================= */
-
-  const handleBackToDashboard = () => {
-    navigate("/dashboard");
-  };
-
-
-  /* =========================================================
-     RESET FORM
-     ========================================================= */
-
-  const resetForm = () => {
-    setName("");
-    setDescription("");
-    setEditingService(null);
-  };
-
-
-  /* =========================================================
-     ADD / UPDATE SERVICE
-     ========================================================= */
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    if (!name.trim()) {
-      setErrorMessage(
-        "Service name is required."
-      );
-
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      /* UPDATE EXISTING SERVICE */
-
-      if (editingService) {
-        await updateService(
-          editingService.id,
-          name,
-          description
-        );
-
-        setSuccessMessage(
-          "Service updated successfully."
-        );
-
-      } else {
-
-        /* ADD NEW SERVICE */
-
-        await addService(
-          name,
-          description
-        );
-
-        setSuccessMessage(
-          "Service added successfully."
-        );
-      }
-
-      resetForm();
-
-      await loadServices();
-
-    } catch (error) {
-      console.error(
-        "Failed to save service:",
-        error
-      );
-
-      setErrorMessage(
-        error.message ||
-        "Unable to save service."
-      );
-
-    } finally {
-      setSaving(false);
-    }
-  };
-
-
-  /* =========================================================
-     EDIT SERVICE
+     EDIT SERVICE (NAVIGATES TO DEDICATED EDIT PAGE)
      ========================================================= */
 
   const handleEdit = (service) => {
-    setEditingService(service);
-
-    setName(
-      service.name || ""
-    );
-
-    setDescription(
-      service.description || ""
-    );
-
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth"
+    navigate(`/services/edit/${service.id}`, {
+      state: { service }
     });
-  };
-
-
-  /* =========================================================
-     CANCEL EDIT
-     ========================================================= */
-
-  const handleCancelEdit = () => {
-    resetForm();
-
-    setErrorMessage("");
-    setSuccessMessage("");
   };
 
 
@@ -367,18 +244,6 @@ function ServicesPage() {
         serviceToDelete.id
       );
 
-      /*
-       * If the deleted service is currently
-       * being edited, clear the edit form.
-       */
-
-      if (
-        editingService &&
-        editingService.id === serviceToDelete.id
-      ) {
-        resetForm();
-      }
-
       setSuccessMessage(
         "Service deleted successfully."
       );
@@ -414,35 +279,6 @@ function ServicesPage() {
       <div className="services-container">
 
         {/* ===================================================
-            BACK TO DASHBOARD
-            =================================================== */}
-
-        <button
-          type="button"
-          onClick={handleBackToDashboard}
-          style={{
-            background: "transparent",
-            border: "none",
-            padding: "0",
-            marginBottom: "18px",
-            color: "#174a78",
-            fontSize: "15px",
-            fontWeight: "600",
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px"
-          }}
-        >
-          <span aria-hidden="true">
-            ←
-          </span>
-
-          Back to Dashboard
-        </button>
-
-
-        {/* ===================================================
             HEADER
             =================================================== */}
 
@@ -456,10 +292,10 @@ function ServicesPage() {
               </h1>
 
               <p>
-                Add and update the services available in E-ReQuest.
+                Manage school departments and service
+                categories available in E-ReQuest.
               </p>
             </div>
-
 
             <div className="services-header-actions">
 
@@ -527,105 +363,6 @@ function ServicesPage() {
           <div className="service-success" style={{ marginBottom: "20px" }}>
             {successMessage}
           </div>
-        )}
-
-
-        {/* ===================================================
-            EDIT SERVICE (ONLY WHEN EDITING)
-            =================================================== */}
-
-        {editingService && (
-          <section className="services-card">
-
-            <h2>
-              Edit Service
-            </h2>
-
-
-            <form
-              className="service-form"
-              onSubmit={handleSubmit}
-            >
-
-              <div className="service-form-grid">
-
-                {/* SERVICE NAME */}
-
-                <div className="service-form-group">
-
-                  <label htmlFor="serviceName">
-                    Service Name
-                  </label>
-
-                  <input
-                    id="serviceName"
-                    type="text"
-                    placeholder="Example: Registrar"
-                    value={name}
-                    onChange={(event) =>
-                      setName(event.target.value)
-                    }
-                    disabled={saving}
-                  />
-
-                </div>
-
-
-                {/* DESCRIPTION */}
-
-                <div className="service-form-group full-width">
-
-                  <label htmlFor="serviceDescription">
-                    Description
-                  </label>
-
-                  <textarea
-                    id="serviceDescription"
-                    placeholder="Enter service description"
-                    value={description}
-                    onChange={(event) =>
-                      setDescription(
-                        event.target.value
-                      )
-                    }
-                    disabled={saving}
-                    rows="4"
-                  />
-
-                </div>
-
-              </div>
-
-
-              {/* FORM BUTTONS */}
-
-              <div className="service-form-actions">
-
-                <button
-                  type="submit"
-                  className="service-primary-button"
-                  disabled={saving}
-                >
-                  {saving
-                    ? "Saving..."
-                    : "Save Changes"}
-                </button>
-
-
-                <button
-                  type="button"
-                  className="service-secondary-button"
-                  onClick={handleCancelEdit}
-                  disabled={saving}
-                >
-                  Cancel
-                </button>
-
-              </div>
-
-            </form>
-
-          </section>
         )}
 
 

@@ -260,26 +260,28 @@ export async function setTransactionActiveStatus(
     throw new Error("Transaction ID is required.");
   }
 
-  const transactions = await getAllTransactions();
-
-  const transaction = transactions.find(
-    (item) => item.id === transactionId
-  );
-
-  const transactionName =
-    transaction?.name || "Transaction";
-
-  const serviceId =
-    transaction?.serviceId || "";
-
-  const serviceName =
-    await getServiceName(serviceId);
-
   const transactionRef = doc(
     db,
     TRANSACTIONS_COLLECTION,
     transactionId
   );
+
+  const transactionSnap =
+    await getDoc(transactionRef);
+
+  const transactionData =
+    transactionSnap.exists()
+      ? transactionSnap.data()
+      : null;
+
+  const transactionName =
+    transactionData?.name || "Transaction";
+
+  const serviceId =
+    transactionData?.serviceId || "";
+
+  const serviceName =
+    await getServiceName(serviceId);
 
   await updateDoc(transactionRef, {
     isActive,
@@ -400,26 +402,28 @@ export async function deleteTransaction(
    * deleting it so the Recent Update
    * still knows its name and service.
    */
-  const transactions = await getAllTransactions();
-
-  const transaction = transactions.find(
-    (item) => item.id === transactionId
-  );
-
-  const transactionName =
-    transaction?.name || "Transaction";
-
-  const serviceId =
-    transaction?.serviceId || "";
-
-  const serviceName =
-    await getServiceName(serviceId);
-
   const transactionRef = doc(
     db,
     TRANSACTIONS_COLLECTION,
     transactionId
   );
+
+  const transactionSnap =
+    await getDoc(transactionRef);
+
+  const transactionData =
+    transactionSnap.exists()
+      ? transactionSnap.data()
+      : null;
+
+  const transactionName =
+    transactionData?.name || "Transaction";
+
+  const serviceId =
+    transactionData?.serviceId || "";
+
+  const serviceName =
+    await getServiceName(serviceId);
 
   await deleteDoc(transactionRef);
 

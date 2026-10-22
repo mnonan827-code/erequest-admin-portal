@@ -1,36 +1,43 @@
 /* =========================================================
-   ADD TRANSACTION PAGE
+   ADD TRANSACTION PAGE (UNIFIED VIEW)
    ========================================================= */
 
 .add-transaction-page {
   width: 100%;
   min-height: 100vh;
-  background: #f5f7fa;
+  box-sizing: border-box;
+  background: #f4f7fa;
   padding: 40px 24px 70px;
+  font-family: Inter, Arial, Helvetica, sans-serif;
   color: #1d2d3e;
+}
+
+.add-transaction-page *,
+.add-transaction-page *::before,
+.add-transaction-page *::after {
+  box-sizing: border-box;
 }
 
 .add-transaction-container {
   width: 100%;
-  max-width: 1050px;
+  max-width: 1040px;
   margin: 0 auto;
 }
-
 
 /* =========================================================
    HEADER
    ========================================================= */
 
 .add-transaction-header {
-  margin-bottom: 25px;
+  margin-bottom: 26px;
 }
 
 .add-transaction-back-button {
+  margin: 0 0 18px;
+  padding: 0;
   border: none;
   background: transparent;
   color: #315f87;
-  padding: 0;
-  margin-bottom: 20px;
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
@@ -42,10 +49,11 @@
 }
 
 .add-transaction-header h1 {
-  margin: 0 0 7px;
+  margin: 0 0 8px;
   color: #173f68;
   font-size: 30px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .add-transaction-header p {
@@ -55,22 +63,84 @@
   line-height: 1.6;
 }
 
-
 /* =========================================================
-   CARD
+   UNIFIED FORM & CARDS
    ========================================================= */
 
-.add-transaction-card {
-  background: #ffffff;
-  border: 1px solid #e0e7ee;
-  border-radius: 14px;
-  padding: 30px;
-  box-shadow: 0 4px 16px rgba(30, 55, 80, 0.05);
+.unified-add-transaction-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
+.add-transaction-card {
+  width: 100%;
+  padding: 28px 30px;
+  border: 1px solid #dfe6ed;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 5px 18px rgba(28, 55, 80, 0.05);
+}
+
+.add-tx-section-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.add-tx-section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e6edf3;
+}
+
+.add-tx-step-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #244f7c;
+  background-color: #eaf2fa;
+  border: 1px solid #c8dbee;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 6px;
+}
+
+.add-tx-section-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  color: #173f68;
+}
+
+.add-tx-section-subtitle {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: #6b7c8d;
+  line-height: 1.5;
+}
+
+.add-tx-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #244f7c;
+  background-color: #f0f5fa;
+  border: 1px solid #d3e1ef;
+  white-space: nowrap;
+}
 
 /* =========================================================
-   FORM
+   FORM GRID & INPUTS
    ========================================================= */
 
 .add-transaction-form-grid {
@@ -95,32 +165,32 @@
   font-weight: 600;
 }
 
+.required-asterisk {
+  color: #c53030;
+}
+
 .add-transaction-form-group input,
 .add-transaction-form-group select,
 .add-transaction-form-group textarea {
   width: 100%;
-  box-sizing: border-box;
-  padding: 12px 14px;
-
+  padding: 11px 14px;
   border: 1px solid #cad5df;
   border-radius: 9px;
-
   background: #ffffff;
   color: #1d2d3e;
-
   font-family: inherit;
   font-size: 14px;
-
   outline: none;
-
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .add-transaction-form-group textarea {
-  min-height: 120px;
+  min-height: 100px;
   resize: vertical;
+}
+
+.add-transaction-form-group textarea.add-tx-compact-textarea {
+  min-height: 68px;
 }
 
 .add-transaction-form-group input:focus,
@@ -137,60 +207,356 @@
   cursor: not-allowed;
 }
 
-.add-transaction-form-group small {
-  color: #8996a2;
-  font-size: 11px;
+/* =========================================================
+   OFFICE SCHEDULE BUILDER (DAYS + TIME RANGE)
+   ========================================================= */
+
+.add-tx-schedule-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 10px 12px;
+  background-color: #f8fafc;
+  border: 1px solid #dce6f0;
+  border-radius: 9px;
 }
 
+.add-tx-schedule-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.add-tx-day-chip {
+  flex: 1 1 auto;
+  min-width: 42px;
+  padding: 5px 8px;
+  border: 1px solid #cbd5df;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #3d5265;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.add-tx-day-chip:hover:not(:disabled) {
+  background: #eef4fa;
+  border-color: #9fb8d0;
+  color: #173f68;
+}
+
+.add-tx-day-chip.active {
+  background: #244f7c;
+  border-color: #244f7c;
+  color: #ffffff;
+}
+
+.add-tx-day-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-tx-schedule-times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-tx-time-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-tx-time-field label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #536779;
+  white-space: nowrap;
+}
+
+.add-tx-time-field input[type="time"] {
+  padding: 6px 8px;
+  font-size: 12.5px;
+  border-radius: 6px;
+}
+
+.add-tx-time-separator {
+  color: #718191;
+  font-weight: 600;
+  font-size: 13px;
+}
 
 /* =========================================================
-   ERROR
+   ERROR BANNERS
    ========================================================= */
 
 .add-transaction-error {
   margin-bottom: 20px;
-  padding: 12px 14px;
-
+  padding: 13px 15px;
   border: 1px solid #efcaca;
   border-radius: 8px;
-
   background: #fff3f3;
   color: #a33b3b;
-
   font-size: 13px;
+  line-height: 1.5;
 }
 
+.add-tx-inline-error {
+  margin-bottom: 0;
+}
 
 /* =========================================================
-   BUTTONS
+   SECTION BUILDERS (REQUIREMENTS, PROCEDURES, GUIDELINES)
+   ========================================================= */
+
+.add-tx-builder-box {
+  background-color: #f7fafc;
+  border: 1px solid #dce6f0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-tx-builder-title {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #173f68;
+}
+
+.add-tx-inline-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.add-tx-align-start {
+  align-items: flex-start;
+}
+
+.add-tx-align-start .add-tx-inline-btn-wrap {
+  padding-top: 23px;
+}
+
+.add-tx-order-field {
+  width: 96px;
+  flex-shrink: 0;
+}
+
+.add-tx-grow-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.add-tx-inline-btn-wrap {
+  flex-shrink: 0;
+}
+
+.add-tx-proc-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.add-tx-proc-optional-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.add-tx-builder-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+
+.add-tx-builder-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+/* Image Preview */
+.add-tx-image-preview-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  background-color: #ffffff;
+  border: 1px solid #dce6f0;
+  border-radius: 10px;
+}
+
+.add-tx-image-preview {
+  width: 96px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #cbd5df;
+}
+
+/* =========================================================
+   ADDED ITEMS LIST
+   ========================================================= */
+
+.add-tx-empty-list {
+  padding: 20px;
+  text-align: center;
+  font-size: 13.5px;
+  color: #718191;
+  background-color: #fafcfe;
+  border: 1px dashed #cbd5df;
+  border-radius: 10px;
+}
+
+.add-tx-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-tx-list-item {
+  background-color: #ffffff;
+  border: 1px solid #dfe6ed;
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.add-tx-list-item:hover {
+  border-color: #c2d1e0;
+  box-shadow: 0 2px 8px rgba(28, 55, 80, 0.04);
+}
+
+.add-tx-item-display {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.add-tx-item-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-tx-item-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #173f68;
+  background-color: #e6f0fa;
+  flex-shrink: 0;
+}
+
+.add-tx-step-badge {
+  min-width: 68px;
+  color: #244f7c;
+  background-color: #dcebfa;
+}
+
+.add-tx-item-text {
+  margin: 3px 0 0;
+  font-size: 14px;
+  color: #1d2d3e;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.add-tx-proc-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.add-tx-proc-meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: #536779;
+}
+
+.add-tx-proc-meta a {
+  color: #244f7c;
+  text-decoration: underline;
+}
+
+.add-tx-step-thumb-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.add-tx-step-thumb {
+  width: 76px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #cbd5df;
+}
+
+.add-tx-step-caption {
+  font-size: 12.5px;
+  color: #718191;
+  font-style: italic;
+}
+
+.add-tx-item-edit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.add-tx-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   BUTTONS & UNIFIED SUBMIT FOOTER
    ========================================================= */
 
 .add-transaction-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
-
-  margin-top: 28px;
-  padding-top: 20px;
-
-  border-top: 1px solid #edf0f3;
 }
 
 .add-transaction-cancel-button,
-.add-transaction-submit-button {
+.add-transaction-save-button,
+.add-tx-secondary-button,
+.add-tx-danger-button {
   padding: 10px 18px;
-
   border-radius: 8px;
-
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-
   cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .add-transaction-cancel-button {
@@ -203,68 +569,146 @@
   background: #f3f6f8;
 }
 
-.add-transaction-submit-button {
+.add-transaction-save-button {
   border: 1px solid #244f7c;
   background: #244f7c;
   color: #ffffff;
 }
 
-.add-transaction-submit-button:hover {
-  background: #193e65;
+.add-transaction-save-button:hover {
   border-color: #193e65;
+  background: #193e65;
+}
+
+.add-tx-secondary-button {
+  border: 1px solid #244f7c;
+  background: #eff6fc;
+  color: #173f68;
+}
+
+.add-tx-secondary-button:hover {
+  background: #dfeaf5;
+}
+
+.add-tx-danger-button {
+  border: 1px solid #f1c0c0;
+  background: #fff5f5;
+  color: #b43434;
+}
+
+.add-tx-danger-button:hover {
+  background: #ffe8e8;
+}
+
+.add-tx-item-btn {
+  height: 41px;
+  white-space: nowrap;
+}
+
+.add-tx-sm-btn {
+  padding: 6px 12px;
+  font-size: 12.5px;
 }
 
 .add-transaction-cancel-button:disabled,
-.add-transaction-submit-button:disabled {
+.add-transaction-save-button:disabled,
+.add-tx-secondary-button:disabled,
+.add-tx-danger-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-
-/* =========================================================
-   LOADING
-   ========================================================= */
-
-.add-transaction-loading {
-  padding: 35px;
-  color: #758493;
-  font-size: 14px;
-  text-align: center;
+.add-tx-submit-bar {
+  padding: 20px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
+.add-tx-submit-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.add-tx-summary-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #294760;
+}
+
+.add-tx-summary-pill {
+  font-size: 12px;
+  font-weight: 600;
+  color: #173f68;
+  background-color: #f0f5fa;
+  border: 1px solid #d3e1ef;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.add-tx-final-actions {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
 
 /* =========================================================
    RESPONSIVE
    ========================================================= */
 
-@media (max-width: 700px) {
-
+@media (max-width: 768px) {
   .add-transaction-page {
-    padding: 25px 15px 50px;
-  }
-
-  .add-transaction-header h1 {
-    font-size: 25px;
+    padding: 24px 16px 50px;
   }
 
   .add-transaction-card {
     padding: 20px;
   }
 
-  .add-transaction-form-grid {
+  .add-transaction-form-grid,
+  .add-tx-proc-optional-grid {
     grid-template-columns: 1fr;
   }
 
-  .add-transaction-form-group.full-width {
-    grid-column: auto;
+  .add-tx-inline-row,
+  .add-tx-proc-grid {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .add-transaction-actions {
-    flex-direction: column-reverse;
-  }
-
-  .add-transaction-actions button {
+  .add-tx-order-field {
     width: 100%;
   }
 
+  .add-tx-align-start .add-tx-inline-btn-wrap {
+    padding-top: 0;
+  }
+
+  .add-tx-item-btn {
+    width: 100%;
+  }
+
+  .add-tx-item-display {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-tx-item-actions {
+    justify-content: flex-end;
+  }
+
+  .add-tx-submit-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 18px 20px;
+  }
+
+  .add-tx-final-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }

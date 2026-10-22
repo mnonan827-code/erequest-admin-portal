@@ -433,17 +433,19 @@ function GuidelinesSection({
           </div>
 
 
-          <button
-            type="button"
-            className="transaction-primary-button"
-            onClick={handleAddGuideline}
-            disabled={
-              saving ||
-              deletingId !== null
-            }
-          >
-            + Add Guideline
-          </button>
+          {!showForm && (
+            <button
+              type="button"
+              className="transaction-primary-button"
+              onClick={handleAddGuideline}
+              disabled={
+                saving ||
+                deletingId !== null
+              }
+            >
+              + Add Guideline
+            </button>
+          )}
 
         </div>
 
