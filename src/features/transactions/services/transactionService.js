@@ -176,15 +176,19 @@ export async function addTransaction(
   const serviceName =
     await getServiceName(cleanServiceId);
 
-  await addActivityLog({
-    type: "transaction",
-    action: "added",
-    title: cleanName,
-    description: "New transaction added",
-    parentName: serviceName,
-    parentId: cleanServiceId,
-    recordId: transactionId
-  });
+  try {
+    await addActivityLog({
+      type: "transaction",
+      action: "added",
+      title: cleanName,
+      description: "New transaction added",
+      parentName: serviceName,
+      parentId: cleanServiceId,
+      recordId: transactionId
+    });
+  } catch (logErr) {
+    console.warn("Transaction activity log notice:", logErr?.message || logErr);
+  }
 
   return transactionId;
 }
@@ -236,15 +240,19 @@ export async function updateTransaction(
   const serviceName =
     await getServiceName(cleanServiceId);
 
-  await addActivityLog({
-    type: "transaction",
-    action: "updated",
-    title: cleanName,
-    description: "Transaction information updated",
-    parentName: serviceName,
-    parentId: cleanServiceId,
-    recordId: transactionId
-  });
+  try {
+    await addActivityLog({
+      type: "transaction",
+      action: "updated",
+      title: cleanName,
+      description: "Transaction information updated",
+      parentName: serviceName,
+      parentId: cleanServiceId,
+      recordId: transactionId
+    });
+  } catch (logErr) {
+    console.warn("Transaction activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -288,19 +296,23 @@ export async function setTransactionActiveStatus(
     updatedAt: serverTimestamp()
   });
 
-  await addActivityLog({
-    type: "transaction",
-    action: isActive
-      ? "activated"
-      : "deactivated",
-    title: transactionName,
-    description: isActive
-      ? "Transaction activated"
-      : "Transaction deactivated",
-    parentName: serviceName,
-    parentId: serviceId,
-    recordId: transactionId
-  });
+  try {
+    await addActivityLog({
+      type: "transaction",
+      action: isActive
+        ? "activated"
+        : "deactivated",
+      title: transactionName,
+      description: isActive
+        ? "Transaction activated"
+        : "Transaction deactivated",
+      parentName: serviceName,
+      parentId: serviceId,
+      recordId: transactionId
+    });
+  } catch (logErr) {
+    console.warn("Transaction activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -427,13 +439,17 @@ export async function deleteTransaction(
 
   await deleteDoc(transactionRef);
 
-  await addActivityLog({
-    type: "transaction",
-    action: "deleted",
-    title: transactionName,
-    description: "Transaction deleted",
-    parentName: serviceName,
-    parentId: serviceId,
-    recordId: transactionId
-  });
+  try {
+    await addActivityLog({
+      type: "transaction",
+      action: "deleted",
+      title: transactionName,
+      description: "Transaction deleted",
+      parentName: serviceName,
+      parentId: serviceId,
+      recordId: transactionId
+    });
+  } catch (logErr) {
+    console.warn("Transaction activity log notice:", logErr?.message || logErr);
+  }
 }

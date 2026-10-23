@@ -1,10 +1,21 @@
 import {
+  useEffect,
+  useState
+} from "react";
+
+import {
   NavLink,
   Outlet,
   useNavigate
 } from "react-router-dom";
 
 import { logoutAdmin } from "../features/auth/services/authService";
+import {
+  getAdminProfile,
+  getCachedAdminProfile,
+  onAdminProfileChange,
+  getInitials
+} from "../features/profile/services/profileService";
 
 import "./AdminLayout.css";
 
@@ -85,6 +96,22 @@ function AnnouncementIcon() {
 }
 
 
+function RequirementsIcon() {
+  return (
+    <svg viewBox="0 0 24 24">
+      <path
+        d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6m-6 9 2 2 4-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+
 function LogoutIcon() {
   return (
     <svg viewBox="0 0 24 24">
@@ -101,6 +128,30 @@ function LogoutIcon() {
 }
 
 
+function ProfileIcon() {
+  return (
+    <svg viewBox="0 0 24 24">
+      <path
+        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="7"
+        r="4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+
 /* =========================================================
    ADMIN LAYOUT
    ========================================================= */
@@ -108,6 +159,36 @@ function LogoutIcon() {
 function AdminLayout() {
 
   const navigate = useNavigate();
+
+  const [profile, setProfile] = useState(() => getCachedAdminProfile());
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadActiveProfile() {
+      try {
+        const loaded = await getAdminProfile();
+        if (isMounted && loaded) {
+          setProfile(loaded);
+        }
+      } catch (err) {
+        console.warn("Could not load admin profile in layout:", err);
+      }
+    }
+
+    loadActiveProfile();
+
+    const unsubscribe = onAdminProfileChange((updated) => {
+      if (isMounted && updated) {
+        setProfile(updated);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
+  }, []);
 
 
   /* =========================================================
@@ -257,6 +338,28 @@ function AdminLayout() {
           </NavLink>
 
 
+          {/* REQUIREMENTS */}
+
+          <NavLink
+            to="/requirements"
+            className={({ isActive }) =>
+              isActive
+                ? "admin-nav-item active"
+                : "admin-nav-item"
+            }
+          >
+
+            <span className="admin-nav-icon">
+              <RequirementsIcon />
+            </span>
+
+            <span>
+              Requirements
+            </span>
+
+          </NavLink>
+
+
           {/* ANNOUNCEMENTS */}
 
           <NavLink
@@ -278,6 +381,28 @@ function AdminLayout() {
 
           </NavLink>
 
+
+          {/* ADMIN PROFILE */}
+
+          <NavLink
+            to="/profile"
+            className={({ isActive }) =>
+              isActive
+                ? "admin-nav-item active"
+                : "admin-nav-item"
+            }
+          >
+
+            <span className="admin-nav-icon">
+              <ProfileIcon />
+            </span>
+
+            <span>
+              Profile
+            </span>
+
+          </NavLink>
+
         </nav>
 
 
@@ -287,29 +412,43 @@ function AdminLayout() {
 
         <div className="admin-sidebar-bottom">
 
+          <NavLink
+            to="/profile"
+            className="admin-user-profile-link"
+            title="View & manage admin profile"
+          >
 
-          <div className="admin-user">
+            <div className="admin-user">
 
-            <div className="admin-user-avatar">
-              A
+              <div className="admin-user-avatar">
+                {getInitials(profile?.name || "Admin User")}
+              </div>
+
+              <div className="admin-user-details">
+
+                <strong title={profile?.name || "Admin User"}>
+                  {profile?.name || "Admin User"}
+                </strong>
+
+                <span
+                  className="admin-user-position"
+                  title={profile?.position || "System Administrator"}
+                >
+                  {profile?.position || "System Administrator"}
+                </span>
+
+                <span
+                  className="admin-user-department"
+                  title={profile?.department || "Registrar's Office"}
+                >
+                  {profile?.department || "Registrar's Office"}
+                </span>
+
+              </div>
+
             </div>
 
-
-            <div className="admin-user-details">
-
-              <strong>
-                Admin User
-              </strong>
-
-              <span>
-                Administrator
-              </span>
-
-            </div>
-
-          </div>
-
-
+          </NavLink>
 
           <button
             type="button"
@@ -326,7 +465,6 @@ function AdminLayout() {
             </span>
 
           </button>
-
 
         </div>
 

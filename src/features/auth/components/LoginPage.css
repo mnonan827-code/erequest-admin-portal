@@ -205,6 +205,166 @@
 
 
 /* =========================================
+   LOGIN HELPER ROW & FORGOT PASSWORD
+   ========================================= */
+
+.login-helper-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-top: -6px;
+  margin-bottom: 20px;
+}
+
+.forgot-password-link {
+  border: none;
+  background: transparent;
+  color: #244f7c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.forgot-password-link:hover:not(:disabled) {
+  color: #1a3858;
+  text-decoration: underline;
+}
+
+.forgot-password-link:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-instruction {
+  margin-bottom: 20px;
+  color: #5a6e82;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.auth-step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b5066;
+}
+
+.auth-step-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #eaf1f8;
+  color: #244f7c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.auth-step-badge-success {
+  background: #e8f5ec;
+  color: #1e6b3e;
+}
+
+.otp-input {
+  letter-spacing: 5px;
+  font-size: 19px !important;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  font-family: monospace, monospace;
+}
+
+.otp-input::placeholder {
+  font-family: Inter, Arial, sans-serif;
+  letter-spacing: normal;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.otp-resend-container {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.resend-cooldown-text {
+  color: #8b99a7;
+  font-size: 12px;
+}
+
+.resend-otp-button {
+  border: none;
+  background: transparent;
+  color: #244f7c;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.resend-otp-button:hover:not(:disabled) {
+  color: #1a3858;
+}
+
+.login-secondary-button {
+  width: 100%;
+  height: 44px;
+  margin-top: 10px;
+  border: 1px solid #d8e0e8;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #435b75;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.login-secondary-button:hover:not(:disabled) {
+  background: #f7f9fb;
+  border-color: #c4d0dc;
+}
+
+.login-secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   SUCCESS & INFO MESSAGES
+   ========================================= */
+
+.login-success {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #b8e2c8;
+  border-radius: 9px;
+  background: #f0f9f4;
+  color: #1e6b3e;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.login-info {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #c6daf0;
+  border-radius: 9px;
+  background: #f0f5fb;
+  color: #1e4b7a;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+/* =========================================
    ERROR MESSAGE
    ========================================= */
 

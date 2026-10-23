@@ -5,8 +5,8 @@
  *   node scripts/seedEmulatorAdmin.js [email] [password] [projectId] [authPort] [firestorePort]
  *
  * Defaults:
- *   Email:         admin@test.local
- *   Password:      TestAdmin123!
+ *   Email:         erequesticctadmin@gmail.com
+ *   Password:      #ICCT4228
  *   Project ID:    demo-erequest-portal
  *   Auth Port:     9099
  *   Firestore Port: 8088
@@ -17,8 +17,8 @@
 
 import process from "node:process";
 
-const email = process.env.EMULATOR_ADMIN_EMAIL || process.argv[2] || "admin@test.local";
-const password = process.env.EMULATOR_ADMIN_PASSWORD || process.argv[3] || "TestAdmin123!";
+const email = process.env.EMULATOR_ADMIN_EMAIL || process.argv[2] || "erequesticctadmin@gmail.com";
+const password = process.env.EMULATOR_ADMIN_PASSWORD || process.argv[3] || "#ICCT4228";
 const projectId = process.argv[4] || process.env.VITE_FIREBASE_EMULATOR_PROJECT_ID || "demo-erequest-portal";
 const authPort = process.argv[5] || process.env.VITE_FIREBASE_AUTH_EMULATOR_PORT || "9099";
 const firestorePort = process.argv[6] || process.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT || "8088";
@@ -95,6 +95,9 @@ async function main() {
         fields: {
           role: { stringValue: "admin" },
           email: { stringValue: email },
+          name: { stringValue: "Admin User" },
+          position: { stringValue: "System Administrator" },
+          department: { stringValue: "Registrar's Office" },
           createdAt: { stringValue: nowIso },
           updatedAt: { stringValue: nowIso }
         }

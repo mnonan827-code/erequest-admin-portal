@@ -147,19 +147,8 @@ export async function addGuideline(
     );
   }
 
-  let parentServiceId = cleanTransactionId;
-  try {
-    const txDocRef = doc(db, TRANSACTIONS_COLLECTION, cleanTransactionId);
-    const txSnap = await getDoc(txDocRef);
-    if (txSnap.exists() && txSnap.data()?.serviceId) {
-      parentServiceId = txSnap.data().serviceId;
-    }
-  } catch {
-    // Fall back to cleanTransactionId if lookup fails
-  }
-
   const guidelineId = buildGuidelineId(
-    parentServiceId,
+    cleanTransactionId,
     cleanGuidelineText
   );
 
@@ -175,23 +164,27 @@ export async function addGuideline(
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     },
-    `A guideline with the text "${cleanGuidelineText}" already exists for this service.`
+    `A guideline with the text "${cleanGuidelineText}" already exists for this transaction.`
   );
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
   const transactionName =
     await getTransactionName(cleanTransactionId);
 
-  await addActivityLog({
-    type: "guideline",
-    action: "added",
-    title: cleanGuidelineText,
-    description: "New guideline added",
-    parentName: transactionName,
-    parentId: cleanTransactionId,
-    recordId: guidelineId
-  });
+  try {
+    await addActivityLog({
+      type: "guideline",
+      action: "added",
+      title: cleanGuidelineText,
+      description: "New guideline added",
+      parentName: transactionName,
+      parentId: cleanTransactionId,
+      recordId: guidelineId
+    });
+  } catch (logErr) {
+    console.warn("Guideline activity log notice:", logErr?.message || logErr);
+  }
 
   return guidelineId;
 }
@@ -251,20 +244,24 @@ export async function updateGuideline(
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
   const transactionName =
     await getTransactionName(cleanTransactionId);
 
-  await addActivityLog({
-    type: "guideline",
-    action: "updated",
-    title: cleanGuidelineText,
-    description: "Guideline information updated",
-    parentName: transactionName,
-    parentId: cleanTransactionId,
-    recordId: guidelineId
-  });
+  try {
+    await addActivityLog({
+      type: "guideline",
+      action: "updated",
+      title: cleanGuidelineText,
+      description: "Guideline information updated",
+      parentName: transactionName,
+      parentId: cleanTransactionId,
+      recordId: guidelineId
+    });
+  } catch (logErr) {
+    console.warn("Guideline activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -313,21 +310,25 @@ export async function setGuidelineActiveStatus(
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "guideline",
-    action: isActive
-      ? "activated"
-      : "deactivated",
-    title: guidelineName,
-    description: isActive
-      ? "Guideline activated"
-      : "Guideline deactivated",
-    parentName: transactionName,
-    parentId: transactionId,
-    recordId: guidelineId
-  });
+  try {
+    await addActivityLog({
+      type: "guideline",
+      action: isActive
+        ? "activated"
+        : "deactivated",
+      title: guidelineName,
+      description: isActive
+        ? "Guideline activated"
+        : "Guideline deactivated",
+      parentName: transactionName,
+      parentId: transactionId,
+      recordId: guidelineId
+    });
+  } catch (logErr) {
+    console.warn("Guideline activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -370,15 +371,19 @@ export async function deleteGuideline(guidelineId) {
 
   await deleteDoc(guidelineRef);
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "guideline",
-    action: "deleted",
-    title: guidelineName,
-    description: "Guideline deleted",
-    parentName: transactionName,
-    parentId: transactionId,
-    recordId: guidelineId
-  });
+  try {
+    await addActivityLog({
+      type: "guideline",
+      action: "deleted",
+      title: guidelineName,
+      description: "Guideline deleted",
+      parentName: transactionName,
+      parentId: transactionId,
+      recordId: guidelineId
+    });
+  } catch (logErr) {
+    console.warn("Guideline activity log notice:", logErr?.message || logErr);
+  }
 }

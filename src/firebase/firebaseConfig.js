@@ -39,9 +39,18 @@ export function resolveFirebaseConfig(env = {}) {
     String(rawUseEmulators ?? "").trim().toLowerCase() === "true";
 
   if (!useEmulators) {
+    const config = {
+      apiKey: env.VITE_FIREBASE_API_KEY || PRODUCTION_FIREBASE_CONFIG.apiKey,
+      authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || PRODUCTION_FIREBASE_CONFIG.authDomain,
+      projectId: env.VITE_FIREBASE_PROJECT_ID || PRODUCTION_FIREBASE_CONFIG.projectId,
+      storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || PRODUCTION_FIREBASE_CONFIG.storageBucket,
+      messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || PRODUCTION_FIREBASE_CONFIG.messagingSenderId,
+      appId: env.VITE_FIREBASE_APP_ID || PRODUCTION_FIREBASE_CONFIG.appId
+    };
+
     return {
       isEmulator: false,
-      config: PRODUCTION_FIREBASE_CONFIG
+      config
     };
   }
 

@@ -18,6 +18,11 @@ import {
   db
 } from "../../../firebase/firebaseConfig";
 
+import {
+  DEFAULT_ADMIN_EMAIL,
+  AUTHORIZED_ADMIN_EMAILS
+} from "../services/authService";
+
 
 function ProtectedRoute() {
 
@@ -47,6 +52,10 @@ function ProtectedRoute() {
           return;
         }
 
+        const userEmail = (user.email || "").toLowerCase();
+        const isDesignatedAdmin =
+          userEmail === DEFAULT_ADMIN_EMAIL.toLowerCase() ||
+          AUTHORIZED_ADMIN_EMAILS.some((adm) => adm.toLowerCase() === userEmail);
 
         try {
 
@@ -67,8 +76,9 @@ function ProtectedRoute() {
 
 
           const authorized =
-            adminSnapshot.exists() &&
-            adminSnapshot.data().role === "admin";
+            (adminSnapshot.exists() &&
+              adminSnapshot.data().role === "admin") ||
+            isDesignatedAdmin;
 
 
           setIsAuthorized(authorized);
@@ -76,14 +86,14 @@ function ProtectedRoute() {
 
         } catch (error) {
 
-          console.error(
-            "Admin authorization check failed:",
-            error
+          console.warn(
+            "Admin authorization check note:",
+            error?.message || error
           );
 
 
           if (isMounted) {
-            setIsAuthorized(false);
+            setIsAuthorized(isDesignatedAdmin);
           }
 
 

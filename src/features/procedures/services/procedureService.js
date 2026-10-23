@@ -194,20 +194,24 @@ export async function addProcedureStep(
     `Step number ${cleanStepNumber} already exists for this transaction.`
   );
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
   const transactionName =
     await getTransactionName(cleanTransactionId);
 
-  await addActivityLog({
-    type: "procedure",
-    action: "added",
-    title: `Step ${cleanStepNumber}: ${cleanInstruction}`,
-    description: "New procedure step added",
-    parentName: transactionName,
-    parentId: cleanTransactionId,
-    recordId: procedureId
-  });
+  try {
+    await addActivityLog({
+      type: "procedure",
+      action: "added",
+      title: `Step ${cleanStepNumber}: ${cleanInstruction}`,
+      description: "New procedure step added",
+      parentName: transactionName,
+      parentId: cleanTransactionId,
+      recordId: procedureId
+    });
+  } catch (logErr) {
+    console.warn("Procedure activity log notice:", logErr?.message || logErr);
+  }
 
   return procedureId;
 }
@@ -294,20 +298,24 @@ export async function updateProcedureStep(
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
   const transactionName =
     await getTransactionName(cleanTransactionId);
 
-  await addActivityLog({
-    type: "procedure",
-    action: "updated",
-    title: `Step ${cleanStepNumber}: ${cleanInstruction}`,
-    description: "Procedure step updated",
-    parentName: transactionName,
-    parentId: cleanTransactionId,
-    recordId: procedureId
-  });
+  try {
+    await addActivityLog({
+      type: "procedure",
+      action: "updated",
+      title: `Step ${cleanStepNumber}: ${cleanInstruction}`,
+      description: "Procedure step updated",
+      parentName: transactionName,
+      parentId: cleanTransactionId,
+      recordId: procedureId
+    });
+  } catch (logErr) {
+    console.warn("Procedure activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -361,23 +369,27 @@ export async function setProcedureStepActiveStatus(
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "procedure",
-    action: isActive
-      ? "activated"
-      : "deactivated",
-    title: stepNumber
-      ? `Step ${stepNumber}: ${instruction}`
-      : instruction,
-    description: isActive
-      ? "Procedure step activated"
-      : "Procedure step deactivated",
-    parentName: transactionName,
-    parentId: transactionId,
-    recordId: procedureId
-  });
+  try {
+    await addActivityLog({
+      type: "procedure",
+      action: isActive
+        ? "activated"
+        : "deactivated",
+      title: stepNumber
+        ? `Step ${stepNumber}: ${instruction}`
+        : instruction,
+      description: isActive
+        ? "Procedure step activated"
+        : "Procedure step deactivated",
+      parentName: transactionName,
+      parentId: transactionId,
+      recordId: procedureId
+    });
+  } catch (logErr) {
+    console.warn("Procedure activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -426,19 +438,23 @@ export async function deleteProcedureStep(
 
   await deleteDoc(procedureRef);
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "procedure",
-    action: "deleted",
-    title: stepNumber
-      ? `Step ${stepNumber}: ${instruction}`
-      : instruction,
-    description: "Procedure step deleted",
-    parentName: transactionName,
-    parentId: transactionId,
-    recordId: procedureId
-  });
+  try {
+    await addActivityLog({
+      type: "procedure",
+      action: "deleted",
+      title: stepNumber
+        ? `Step ${stepNumber}: ${instruction}`
+        : instruction,
+      description: "Procedure step deleted",
+      parentName: transactionName,
+      parentId: transactionId,
+      recordId: procedureId
+    });
+  } catch (logErr) {
+    console.warn("Procedure activity log notice:", logErr?.message || logErr);
+  }
 }
 
 

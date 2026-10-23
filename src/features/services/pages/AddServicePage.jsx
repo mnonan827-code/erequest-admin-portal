@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
-  getAllServices,
+  getServiceById,
   addService,
   updateService
 } from "../services/serviceService";
@@ -47,10 +47,9 @@ function AddServicePage() {
         }
         setErrorMessage("");
 
-        const services = await getAllServices();
+        const existing = await getServiceById(serviceId);
         if (ignore) return;
 
-        const existing = services.find((item) => item.id === serviceId);
         if (!existing) {
           setErrorMessage("Service not found.");
           return;

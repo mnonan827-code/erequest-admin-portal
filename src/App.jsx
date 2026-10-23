@@ -34,12 +34,6 @@ const TransactionsPage =
 const AddTransactionPage =
   lazy(() => import("./features/transactions/pages/AddTransactionPage"));
 
-const EditTransactionPage =
-  lazy(() => import("./features/transactions/pages/EditTransactionPage"));
-
-const ManageTransactionPage =
-  lazy(() => import("./features/transactions/pages/ManageTransactionPage"));
-
 const AnnouncementsPage =
   lazy(() => import("./features/announcements/pages/AnnouncementsPage"));
 
@@ -48,6 +42,9 @@ const AddAnnouncementPage =
 
 const RequirementsPage =
   lazy(() => import("./features/requirements/pages/RequirementsPage"));
+
+const AdminProfilePage =
+  lazy(() => import("./features/profile/pages/AdminProfilePage"));
 
 function RouteLoadingFallback() {
   return (
@@ -163,7 +160,7 @@ function App() {
 
             <Route
               path="/transactions/edit/:transactionId"
-              element={<EditTransactionPage />}
+              element={<AddTransactionPage />}
             />
 
 
@@ -171,7 +168,7 @@ function App() {
 
             <Route
               path="/transactions/manage/:transactionId"
-              element={<ManageTransactionPage />}
+              element={<AddTransactionPage />}
             />
 
 
@@ -204,6 +201,14 @@ function App() {
             <Route
               path="/announcements/edit/:announcementId"
               element={<AddAnnouncementPage />}
+            />
+
+
+            {/* ADMIN PROFILE */}
+
+            <Route
+              path="/profile"
+              element={<AdminProfilePage />}
             />
 
 

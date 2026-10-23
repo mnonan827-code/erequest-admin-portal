@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   getAllAnnouncements,
+  getAnnouncementById,
   addAnnouncement,
   updateAnnouncement
 } from "../services/announcementService";
@@ -49,11 +50,9 @@ function AddAnnouncementPage() {
         }
         setErrorMessage("");
 
-        const data = await getAllAnnouncements();
-        if (ignore) return;
-
         if (isEditMode) {
-          const existing = data.find((item) => item.id === announcementId);
+          const existing = await getAnnouncementById(announcementId);
+          if (ignore) return;
           if (!existing) {
             setErrorMessage("Announcement not found.");
             return;
@@ -65,6 +64,8 @@ function AddAnnouncementPage() {
             existing.displayOrder != null ? String(existing.displayOrder) : "1"
           );
         } else {
+          const data = await getAllAnnouncements();
+          if (ignore) return;
           const maxOrder = data.reduce(
             (max, item) => Math.max(max, Number(item.displayOrder) || 0),
             0

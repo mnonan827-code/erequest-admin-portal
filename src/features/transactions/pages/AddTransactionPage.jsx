@@ -1002,7 +1002,7 @@ function AddTransactionPage() {
         for (const guide of finalGuidelines) {
           if (guide.isExisting) {
             const expectedGuideId = buildGuidelineId(
-              serviceId.trim() || transactionId,
+              transactionId,
               guide.guidelineText
             );
             if (guide.id !== expectedGuideId) {
@@ -1015,7 +1015,7 @@ function AddTransactionPage() {
         }
         for (const guide of finalGuidelines) {
           const expectedGuideId = buildGuidelineId(
-            serviceId.trim() || transactionId,
+            transactionId,
             guide.guidelineText
           );
           if (guide.isExisting && guide.id === expectedGuideId) {

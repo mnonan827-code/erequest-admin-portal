@@ -32,6 +32,34 @@ export const getAllAnnouncements = async () => {
 
 
 /* =========================================================
+   GET ANNOUNCEMENT BY ID
+   ========================================================= */
+
+export const getAnnouncementById = async (announcementId) => {
+  if (!announcementId) {
+    return null;
+  }
+
+  const announcementRef = doc(
+    db,
+    ANNOUNCEMENTS_COLLECTION,
+    announcementId
+  );
+
+  const snapshot = await getDoc(announcementRef);
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  return {
+    id: snapshot.id,
+    ...snapshot.data()
+  };
+};
+
+
+/* =========================================================
    ADD ANNOUNCEMENT
    ========================================================= */
 
@@ -74,15 +102,19 @@ export const addAnnouncement = async (
     }
   );
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "announcement",
-    action: "added",
-    title: cleanTitle,
-    description: "New announcement added",
-    recordId: documentReference.id
-  });
+  try {
+    await addActivityLog({
+      type: "announcement",
+      action: "added",
+      title: cleanTitle,
+      description: "New announcement added",
+      recordId: documentReference.id
+    });
+  } catch (logErr) {
+    console.warn("Announcement activity log notice:", logErr?.message || logErr);
+  }
 
   return documentReference.id;
 };
@@ -139,15 +171,19 @@ export const updateAnnouncement = async (
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "announcement",
-    action: "updated",
-    title: cleanTitle,
-    description: "Announcement information updated",
-    recordId: announcementId
-  });
+  try {
+    await addActivityLog({
+      type: "announcement",
+      action: "updated",
+      title: cleanTitle,
+      description: "Announcement information updated",
+      recordId: announcementId
+    });
+  } catch (logErr) {
+    console.warn("Announcement activity log notice:", logErr?.message || logErr);
+  }
 };
 
 
@@ -188,23 +224,27 @@ export const setAnnouncementActiveStatus = async (
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "announcement",
+  try {
+    await addActivityLog({
+      type: "announcement",
 
-    action: isActive
-      ? "activated"
-      : "deactivated",
+      action: isActive
+        ? "activated"
+        : "deactivated",
 
-    title: announcementTitle,
+      title: announcementTitle,
 
-    description: isActive
-      ? "Announcement activated"
-      : "Announcement deactivated",
+      description: isActive
+        ? "Announcement activated"
+        : "Announcement deactivated",
 
-    recordId: announcementId
-  });
+      recordId: announcementId
+    });
+  } catch (logErr) {
+    console.warn("Announcement activity log notice:", logErr?.message || logErr);
+  }
 };
 
 
@@ -241,13 +281,17 @@ export const deleteAnnouncement = async (
 
   await deleteDoc(announcementRef);
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "announcement",
-    action: "deleted",
-    title: announcementTitle,
-    description: "Announcement deleted",
-    recordId: announcementId
-  });
+  try {
+    await addActivityLog({
+      type: "announcement",
+      action: "deleted",
+      title: announcementTitle,
+      description: "Announcement deleted",
+      recordId: announcementId
+    });
+  } catch (logErr) {
+    console.warn("Announcement activity log notice:", logErr?.message || logErr);
+  }
 };

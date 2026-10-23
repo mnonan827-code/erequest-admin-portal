@@ -196,20 +196,24 @@ export async function addRequirement(
     `A requirement with the text "${cleanRequirementText}" already exists for this transaction.`
   );
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
   const transactionName =
     await getTransactionName(cleanTransactionId);
 
-  await addActivityLog({
-    type: "requirement",
-    action: "added",
-    title: cleanRequirementText,
-    description: "New requirement added",
-    parentName: transactionName,
-    parentId: cleanTransactionId,
-    recordId: requirementId
-  });
+  try {
+    await addActivityLog({
+      type: "requirement",
+      action: "added",
+      title: cleanRequirementText,
+      description: "New requirement added",
+      parentName: transactionName,
+      parentId: cleanTransactionId,
+      recordId: requirementId
+    });
+  } catch (logErr) {
+    console.warn("Requirement activity log notice:", logErr?.message || logErr);
+  }
 
   return requirementId;
 }
@@ -269,20 +273,24 @@ export async function updateRequirement(
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
   const transactionName =
     await getTransactionName(cleanTransactionId);
 
-  await addActivityLog({
-    type: "requirement",
-    action: "updated",
-    title: cleanRequirementText,
-    description: "Requirement information updated",
-    parentName: transactionName,
-    parentId: cleanTransactionId,
-    recordId: requirementId
-  });
+  try {
+    await addActivityLog({
+      type: "requirement",
+      action: "updated",
+      title: cleanRequirementText,
+      description: "Requirement information updated",
+      parentName: transactionName,
+      parentId: cleanTransactionId,
+      recordId: requirementId
+    });
+  } catch (logErr) {
+    console.warn("Requirement activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -329,21 +337,25 @@ export async function setRequirementActiveStatus(
     updatedAt: serverTimestamp()
   });
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "requirement",
-    action: isActive
-      ? "activated"
-      : "deactivated",
-    title: requirementName,
-    description: isActive
-      ? "Requirement activated"
-      : "Requirement deactivated",
-    parentName: transactionName,
-    parentId: transactionId,
-    recordId: requirementId
-  });
+  try {
+    await addActivityLog({
+      type: "requirement",
+      action: isActive
+        ? "activated"
+        : "deactivated",
+      title: requirementName,
+      description: isActive
+        ? "Requirement activated"
+        : "Requirement deactivated",
+      parentName: transactionName,
+      parentId: transactionId,
+      recordId: requirementId
+    });
+  } catch (logErr) {
+    console.warn("Requirement activity log notice:", logErr?.message || logErr);
+  }
 }
 
 
@@ -388,15 +400,19 @@ export async function deleteRequirement(
 
   await deleteDoc(requirementRef);
 
-  /* ACTIVITY LOG */
+  /* ACTIVITY LOG (NON-BLOCKING) */
 
-  await addActivityLog({
-    type: "requirement",
-    action: "deleted",
-    title: requirementName,
-    description: "Requirement deleted",
-    parentName: transactionName,
-    parentId: transactionId,
-    recordId: requirementId
-  });
+  try {
+    await addActivityLog({
+      type: "requirement",
+      action: "deleted",
+      title: requirementName,
+      description: "Requirement deleted",
+      parentName: transactionName,
+      parentId: transactionId,
+      recordId: requirementId
+    });
+  } catch (logErr) {
+    console.warn("Requirement activity log notice:", logErr?.message || logErr);
+  }
 }

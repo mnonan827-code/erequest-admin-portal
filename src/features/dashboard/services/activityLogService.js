@@ -10,11 +10,11 @@ import {
 
 import {
   db
-} from "../../../firebase/firebaseConfig";
+} from "../../../firebase/firebaseConfig.js";
 
 import {
   convertTimestampToDate
-} from "../../../utils/timestampUtils";
+} from "../../../utils/timestampUtils.js";
 
 
 const ACTIVITY_LOGS_COLLECTION =

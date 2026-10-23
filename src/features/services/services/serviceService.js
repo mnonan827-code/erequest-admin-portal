@@ -73,6 +73,34 @@ export async function getAllServices() {
 
 
 /* =========================================================
+   GET SERVICE BY ID
+   ========================================================= */
+
+export async function getServiceById(serviceId) {
+  if (!serviceId) {
+    return null;
+  }
+
+  const serviceRef = doc(
+    db,
+    SERVICES_COLLECTION,
+    serviceId
+  );
+
+  const snapshot = await getDoc(serviceRef);
+
+  if (!snapshot.exists()) {
+    return null;
+  }
+
+  return {
+    id: snapshot.id,
+    ...snapshot.data()
+  };
+}
+
+
+/* =========================================================
    ADD NEW SERVICE
    ========================================================= */
 
@@ -128,27 +156,20 @@ export async function addService(
 
 
   /* =======================================================
-     ACTIVITY LOG
+     ACTIVITY LOG (NON-BLOCKING)
      ======================================================= */
 
-  await addActivityLog({
-
-    type:
-      "service",
-
-    action:
-      "added",
-
-    title:
-      cleanName,
-
-    description:
-      "New service added",
-
-    recordId:
-      serviceId
-
-  });
+  try {
+    await addActivityLog({
+      type: "service",
+      action: "added",
+      title: cleanName,
+      description: "New service added",
+      recordId: serviceId
+    });
+  } catch (logErr) {
+    console.warn("Service activity log notice:", logErr?.message || logErr);
+  }
 
 
   return serviceId;
@@ -217,27 +238,20 @@ export async function updateService(
 
 
   /* =======================================================
-     ACTIVITY LOG
+     ACTIVITY LOG (NON-BLOCKING)
      ======================================================= */
 
-  await addActivityLog({
-
-    type:
-      "service",
-
-    action:
-      "updated",
-
-    title:
-      cleanName,
-
-    description:
-      "Service information updated",
-
-    recordId:
-      serviceId
-
-  });
+  try {
+    await addActivityLog({
+      type: "service",
+      action: "updated",
+      title: cleanName,
+      description: "Service information updated",
+      recordId: serviceId
+    });
+  } catch (logErr) {
+    console.warn("Service activity log notice:", logErr?.message || logErr);
+  }
 
 }
 
@@ -299,31 +313,20 @@ export async function setServiceActiveStatus(
 
 
   /* =======================================================
-     ACTIVITY LOG
+     ACTIVITY LOG (NON-BLOCKING)
      ======================================================= */
 
-  await addActivityLog({
-
-    type:
-      "service",
-
-    action:
-      isActive
-        ? "activated"
-        : "deactivated",
-
-    title:
-      serviceName,
-
-    description:
-      isActive
-        ? "Service activated"
-        : "Service deactivated",
-
-    recordId:
-      serviceId
-
-  });
+  try {
+    await addActivityLog({
+      type: "service",
+      action: isActive ? "activated" : "deactivated",
+      title: serviceName,
+      description: isActive ? "Service activated" : "Service deactivated",
+      recordId: serviceId
+    });
+  } catch (logErr) {
+    console.warn("Service activity log notice:", logErr?.message || logErr);
+  }
 
 }
 
@@ -427,26 +430,19 @@ export async function deleteService(
 
 
   /* =======================================================
-     ACTIVITY LOG
+     ACTIVITY LOG (NON-BLOCKING)
      ======================================================= */
 
-  await addActivityLog({
-
-    type:
-      "service",
-
-    action:
-      "deleted",
-
-    title:
-      serviceName,
-
-    description:
-      "Service deleted",
-
-    recordId:
-      serviceId
-
-  });
+  try {
+    await addActivityLog({
+      type: "service",
+      action: "deleted",
+      title: serviceName,
+      description: "Service deleted",
+      recordId: serviceId
+    });
+  } catch (logErr) {
+    console.warn("Service activity log notice:", logErr?.message || logErr);
+  }
 
 }
