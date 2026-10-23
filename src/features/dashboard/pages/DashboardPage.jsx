@@ -215,8 +215,7 @@ function DashboardPage() {
     fetchDashboardData();
 
     // Subscribe to real-time activity logs with onSnapshot
-    const unsubscribe = subscribeToRecentActivityLogs(
-      (activities) => {
+    const unsubscribe = subscribeToRecentActivityLogs((activities) => {
         if (!ignore) {
           setRecentActivities(activities);
           setRecentLoading(false);
@@ -228,7 +227,7 @@ function DashboardPage() {
           setRecentLoading(false);
         }
       },
-      15
+      5
     );
 
     return () => {
@@ -353,7 +352,7 @@ function DashboardPage() {
           </div>
 
           <span className="recent-updates-count">
-            Latest 15
+            Latest 5
           </span>
 
         </div>

@@ -99,7 +99,7 @@ export async function addActivityLog({
    GET RECENT ACTIVITY LOGS (ONE-TIME FETCH)
    ========================================================= */
 
-export async function getRecentActivityLogs(maxLogs = 10) {
+export async function getRecentActivityLogs(maxLogs = 5) {
   try {
     const activityLogsRef = collection(db, ACTIVITY_LOGS_COLLECTION);
     const recentActivitiesQuery = query(
@@ -136,7 +136,7 @@ export async function getRecentActivityLogs(maxLogs = 10) {
 export function subscribeToRecentActivityLogs(
   onUpdate,
   onError,
-  maxLogs = 15
+  maxLogs = 5
 ) {
   if (typeof onUpdate !== "function") {
     return () => {};
