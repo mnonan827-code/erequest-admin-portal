@@ -23,6 +23,8 @@ import {
   AUTHORIZED_ADMIN_EMAILS
 } from "../services/authService";
 
+import { AdminProfileProvider } from "../../profile/context/AdminProfileProvider";
+
 
 function ProtectedRoute() {
 
@@ -152,7 +154,11 @@ function ProtectedRoute() {
   }
 
 
-  return <Outlet />;
+  return (
+    <AdminProfileProvider>
+      <Outlet />
+    </AdminProfileProvider>
+  );
 
 }
 

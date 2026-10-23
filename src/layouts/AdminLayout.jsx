@@ -1,21 +1,11 @@
 import {
-  useEffect,
-  useState
-} from "react";
-
-import {
   NavLink,
   Outlet,
   useNavigate
 } from "react-router-dom";
 
 import { logoutAdmin } from "../features/auth/services/authService";
-import {
-  getAdminProfile,
-  getCachedAdminProfile,
-  onAdminProfileChange,
-  getInitials
-} from "../features/profile/services/profileService";
+import { useAdminProfile } from "../features/profile/context/AdminProfileContext";
 
 import "./AdminLayout.css";
 
@@ -159,36 +149,7 @@ function ProfileIcon() {
 function AdminLayout() {
 
   const navigate = useNavigate();
-
-  const [profile, setProfile] = useState(() => getCachedAdminProfile());
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadActiveProfile() {
-      try {
-        const loaded = await getAdminProfile();
-        if (isMounted && loaded) {
-          setProfile(loaded);
-        }
-      } catch (err) {
-        console.warn("Could not load admin profile in layout:", err);
-      }
-    }
-
-    loadActiveProfile();
-
-    const unsubscribe = onAdminProfileChange((updated) => {
-      if (isMounted && updated) {
-        setProfile(updated);
-      }
-    });
-
-    return () => {
-      isMounted = false;
-      unsubscribe();
-    };
-  }, []);
+  const { profile, initials } = useAdminProfile();
 
 
   /* =========================================================
@@ -421,7 +382,7 @@ function AdminLayout() {
             <div className="admin-user">
 
               <div className="admin-user-avatar">
-                {getInitials(profile?.name || "Admin User")}
+                {initials}
               </div>
 
               <div className="admin-user-details">

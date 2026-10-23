@@ -1,13 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import {
-  getAdminProfile,
-  updateAdminProfile,
-  getInitials,
   PRESET_DEPARTMENTS,
   PRESET_POSITIONS
 } from "../services/profileService";
+import { useAdminProfileSync } from "../context/AdminProfileContext";
 
 import "../components/AdminProfilePage.css";
 
@@ -76,52 +74,38 @@ function AlertIcon() {
    ========================================================= */
 
 function AdminProfilePage() {
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    profile,
+    loading,
+    isSyncing,
+    initials,
+    updateProfile
+  } = useAdminProfileSync();
+
   const [saving, setSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   // Form State
-  const [name, setName] = useState("");
-  const [position, setPosition] = useState("");
-  const [department, setDepartment] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(() => profile?.name || "");
+  const [position, setPosition] = useState(() => profile?.position || "");
+  const [department, setDepartment] = useState(() => profile?.department || "");
+  const [phone, setPhone] = useState(() => profile?.phone || "");
+
+  // Track previous profile reference to adjust form state when remote Firestore changes arrive (cross-device sync)
+  const [prevProfile, setPrevProfile] = useState(profile);
+  if (profile !== prevProfile) {
+    setPrevProfile(profile);
+    if (!isDirty && profile) {
+      setName(profile.name || "");
+      setPosition(profile.position || "");
+      setDepartment(profile.department || "");
+      setPhone(profile.phone || "");
+    }
+  }
 
   // Feedback states
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-
-  // Load Admin Profile
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadData() {
-      try {
-        const data = await getAdminProfile();
-        if (isMounted && data) {
-          setProfile(data);
-          setName(data.name || "");
-          setPosition(data.position || "");
-          setDepartment(data.department || "");
-          setPhone(data.phone || "");
-        }
-      } catch (err) {
-        console.error("Failed to load profile:", err);
-        if (isMounted) {
-          setErrorMessage("Failed to load admin profile details.");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Handle Form Submission
   const handleSubmit = async (e) => {
@@ -148,16 +132,18 @@ function AdminProfilePage() {
 
     try {
       setSaving(true);
-      const res = await updateAdminProfile({
+      const res = await updateProfile({
         name: cleanName,
         position: cleanPosition,
         department: cleanDepartment,
         phone: phone.trim()
       });
 
-      if (res.success && res.profile) {
-        setProfile(res.profile);
-        setSuccessMessage("Administrator profile updated successfully! Changes are active across the portal.");
+      if (res.success) {
+        setIsDirty(false);
+        setSuccessMessage(
+          "Administrator profile updated successfully! Real-time changes are synchronized across all devices."
+        );
       }
     } catch (err) {
       console.error("Save profile error:", err);
@@ -174,12 +160,13 @@ function AdminProfilePage() {
       setPosition(profile.position || "");
       setDepartment(profile.department || "");
       setPhone(profile.phone || "");
+      setIsDirty(false);
       setErrorMessage("");
       setSuccessMessage("");
     }
   };
 
-  if (loading) {
+  if (loading && !profile) {
     return (
       <div className="admin-profile-page">
         <div className="admin-profile-loading">
@@ -189,8 +176,6 @@ function AdminProfilePage() {
       </div>
     );
   }
-
-  const initials = getInitials(name || profile?.name || "Admin");
 
   return (
     <div className="admin-profile-page">
@@ -202,7 +187,7 @@ function AdminProfilePage() {
         </div>
         <div className="admin-profile-status-badge">
           <ShieldCheckIcon />
-          <span>Active Administrator</span>
+          <span>{isSyncing ? "Syncing..." : "Active Administrator"}</span>
         </div>
       </header>
 
@@ -298,7 +283,10 @@ function AdminProfilePage() {
                   id="admin-name"
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    setIsDirty(true);
+                  }}
                   placeholder="e.g. Juan Dela Cruz"
                   required
                 />
@@ -318,7 +306,10 @@ function AdminProfilePage() {
                   id="admin-position"
                   type="text"
                   value={position}
-                  onChange={(e) => setPosition(e.target.value)}
+                  onChange={(e) => {
+                    setPosition(e.target.value);
+                    setIsDirty(true);
+                  }}
                   placeholder="e.g. Registrar Officer, System Administrator"
                   required
                 />
@@ -333,7 +324,10 @@ function AdminProfilePage() {
                       key={pos}
                       type="button"
                       className={`admin-profile-chip ${position === pos ? "active" : ""}`}
-                      onClick={() => setPosition(pos)}
+                      onClick={() => {
+                        setPosition(pos);
+                        setIsDirty(true);
+                      }}
                     >
                       {pos}
                     </button>
@@ -352,7 +346,10 @@ function AdminProfilePage() {
                   id="admin-department"
                   type="text"
                   value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
+                  onChange={(e) => {
+                    setDepartment(e.target.value);
+                    setIsDirty(true);
+                  }}
                   placeholder="e.g. Registrar's Office, Admissions Office"
                   required
                 />
@@ -367,7 +364,10 @@ function AdminProfilePage() {
                       key={dept}
                       type="button"
                       className={`admin-profile-chip ${department === dept ? "active" : ""}`}
-                      onClick={() => setDepartment(dept)}
+                      onClick={() => {
+                        setDepartment(dept);
+                        setIsDirty(true);
+                      }}
                     >
                       {dept}
                     </button>
@@ -384,7 +384,10 @@ function AdminProfilePage() {
                   id="admin-phone"
                   type="text"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setIsDirty(true);
+                  }}
                   placeholder="e.g. +63 912 345 6789"
                 />
               </div>

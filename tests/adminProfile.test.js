@@ -8,7 +8,9 @@ import {
   getInitials,
   validateProfile,
   getCachedAdminProfile,
-  cacheAdminProfile
+  cacheAdminProfile,
+  normalizeProfileData,
+  subscribeToAdminProfile
 } from "../src/features/profile/services/profileService.js";
 
 test("Profile Constants: DEFAULT_PROFILE contains required name, position, department fields", () => {
@@ -125,4 +127,27 @@ test("Profile Cache: Manages fallback and localStorage integration", () => {
   assert.equal(retrieved.name, "Prof. Ricardo Dalisay");
   assert.equal(retrieved.position, "Head Administrator");
   assert.equal(retrieved.department, "Admissions Office");
+});
+
+test("Real-time Normalization: Normalizes remote Firestore snapshot data with defaults", () => {
+  const remoteSnapshot = {
+    name: "Dr. Maria Clara",
+    position: "Chief Registrar",
+    department: "Registrar's Office",
+    role: "admin",
+    updatedAt: "2026-10-24T04:00:00.000Z"
+  };
+
+  const normalized = normalizeProfileData(remoteSnapshot, "admin_uid_123");
+  assert.equal(normalized.name, "Dr. Maria Clara");
+  assert.equal(normalized.position, "Chief Registrar");
+  assert.equal(normalized.department, "Registrar's Office");
+  assert.equal(normalized.role, "Administrator");
+  assert.equal(normalized.updatedAt, "2026-10-24T04:00:00.000Z");
+});
+
+test("Real-time Subscription: subscribeToAdminProfile handles invalid callback safely", () => {
+  const unsubscribe = subscribeToAdminProfile(null, null);
+  assert.equal(typeof unsubscribe, "function", "Expected subscribeToAdminProfile to return cleanup function");
+  assert.doesNotThrow(() => unsubscribe(), "Unsubscribing should not throw");
 });

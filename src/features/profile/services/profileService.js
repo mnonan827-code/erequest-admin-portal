@@ -1,7 +1,8 @@
 import {
   doc,
   getDoc,
-  setDoc
+  setDoc,
+  onSnapshot
 } from "firebase/firestore";
 
 import { updateProfile as updateAuthProfile } from "firebase/auth";
@@ -165,11 +166,37 @@ export function cacheAdminProfile(profileData, userId) {
 }
 
 /**
+ * Normalizes raw admin document data against defaults and cache.
+ */
+export function normalizeProfileData(raw = {}, uid, cached = null) {
+  const currentEmail =
+    auth.currentUser?.email || raw.email || cached?.email || DEFAULT_ADMIN_EMAIL;
+
+  return {
+    name:
+      raw.name ||
+      auth.currentUser?.displayName ||
+      cached?.name ||
+      DEFAULT_PROFILE.name,
+    position:
+      raw.position || cached?.position || DEFAULT_PROFILE.position,
+    department:
+      raw.department || cached?.department || DEFAULT_PROFILE.department,
+    email: raw.email || currentEmail,
+    phone: raw.phone || cached?.phone || "",
+    role:
+      raw.role === "admin"
+        ? "Administrator"
+        : raw.role || cached?.role || "Administrator",
+    updatedAt: raw.updatedAt || cached?.updatedAt || null
+  };
+}
+
+/**
  * Loads the admin profile from Firestore (admins/{userId}), falling back to cache.
  */
 export async function getAdminProfile(userId) {
   const currentUid = userId || auth.currentUser?.uid;
-  const currentEmail = auth.currentUser?.email || DEFAULT_ADMIN_EMAIL;
   const cached = getCachedAdminProfile(currentUid);
 
   if (!currentUid) {
@@ -182,16 +209,7 @@ export async function getAdminProfile(userId) {
 
     if (snap.exists()) {
       const data = snap.data();
-      const resolvedProfile = {
-        name: data.name || auth.currentUser?.displayName || cached.name || DEFAULT_PROFILE.name,
-        position: data.position || cached.position || DEFAULT_PROFILE.position,
-        department: data.department || cached.department || DEFAULT_PROFILE.department,
-        email: data.email || currentEmail,
-        phone: data.phone || cached.phone || "",
-        role: data.role === "admin" ? "Administrator" : (data.role || "Administrator"),
-        updatedAt: data.updatedAt || cached.updatedAt || null
-      };
-
+      const resolvedProfile = normalizeProfileData(data, currentUid, cached);
       cacheAdminProfile(resolvedProfile, currentUid);
       return resolvedProfile;
     }
@@ -309,7 +327,125 @@ export async function updateAdminProfile(updatedFields = {}, userId) {
 }
 
 /**
+ * Subscribes to real-time updates for an admin profile document in Firestore (admins/{userId}).
+ * Automatically synchronizes profile changes across all devices and sessions without manual page refresh.
+ *
+ * @param {string|function} userIdOrCallback - Optional user ID (or callback function)
+ * @param {function} [onUpdateOrCallback] - Callback invoked when profile updates
+ * @param {function} [onError] - Optional error handler callback
+ * @returns {function(): void} Unsubscribe function
+ */
+export function subscribeToAdminProfile(userIdOrCallback, onUpdateOrCallback, onError) {
+  const targetUid =
+    typeof userIdOrCallback === "function"
+      ? auth.currentUser?.uid || null
+      : userIdOrCallback || auth.currentUser?.uid || null;
+
+  const updateCallback =
+    typeof userIdOrCallback === "function" ? userIdOrCallback : onUpdateOrCallback;
+
+  const errorCallback =
+    typeof userIdOrCallback === "function" ? onUpdateOrCallback : onError;
+
+  if (typeof updateCallback !== "function") {
+    return () => {};
+  }
+
+  // If user is not yet loaded in auth state, wait for auth to establish UID
+  if (!targetUid && typeof auth?.onAuthStateChanged === "function") {
+    let docUnsub = null;
+    let isCleanedUp = false;
+
+    const authUnsub = auth.onAuthStateChanged((user) => {
+      if (isCleanedUp) return;
+      if (user?.uid) {
+        if (docUnsub) docUnsub();
+        docUnsub = subscribeToAdminDoc(user.uid, updateCallback, errorCallback);
+      }
+    });
+
+    return () => {
+      isCleanedUp = true;
+      if (authUnsub) authUnsub();
+      if (docUnsub) docUnsub();
+    };
+  }
+
+  if (!targetUid) {
+    const cached = getCachedAdminProfile();
+    updateCallback(cached);
+    return () => {};
+  }
+
+  return subscribeToAdminDoc(targetUid, updateCallback, errorCallback);
+}
+
+/**
+ * Attaches Firestore onSnapshot listener to the specific admin document.
+ */
+function subscribeToAdminDoc(uid, onUpdate, onError) {
+  try {
+    const adminDocRef = doc(db, "admins", uid);
+
+    const unsubscribe = onSnapshot(
+      adminDocRef,
+      (snapshot) => {
+        try {
+          const cached = getCachedAdminProfile(uid);
+          if (snapshot.exists()) {
+            const data = snapshot.data();
+            const resolved = normalizeProfileData(data, uid, cached);
+
+            // Keep local storage updated with authoritative remote state
+            cacheAdminProfile(resolved, uid);
+
+            // Notify local tab listeners
+            if (typeof window !== "undefined") {
+              try {
+                window.dispatchEvent(
+                  new CustomEvent(PROFILE_UPDATE_EVENT, { detail: resolved })
+                );
+              } catch {
+                // Ignore restricted window dispatch errors
+              }
+            }
+
+            onUpdate(resolved);
+          } else {
+            // Document doesn't exist yet, emit cached or default fallback
+            onUpdate(cached);
+          }
+        } catch (err) {
+          console.warn("Failed to process real-time admin profile update:", err);
+          if (typeof onError === "function") {
+            onError(err);
+          }
+        }
+      },
+      (error) => {
+        console.warn("Firestore real-time profile listener notice:", error?.message || error);
+        // Fallback to cached profile to prevent UI interruption
+        const cached = getCachedAdminProfile(uid);
+        onUpdate(cached);
+        if (typeof onError === "function") {
+          onError(error);
+        }
+      }
+    );
+
+    return unsubscribe;
+  } catch (err) {
+    console.warn("Could not initiate Firestore profile subscription:", err);
+    if (typeof onError === "function") {
+      onError(err);
+    }
+    return () => {};
+  }
+}
+
+/**
  * Registers a listener callback for profile updates.
+ * Bridges real-time Firestore updates across devices with local tab events.
  * Returns an unsubscribe function.
  */
 export function onAdminProfileChange(callback) {
@@ -317,6 +453,10 @@ export function onAdminProfileChange(callback) {
     return () => {};
   }
 
+  // 1. Subscribe to real-time Firestore listener for cross-device updates
+  const firestoreUnsub = subscribeToAdminProfile(callback);
+
+  // 2. Also listen for same-tab custom events
   const handler = (event) => {
     if (event?.detail) {
       callback(event.detail);
@@ -324,7 +464,11 @@ export function onAdminProfileChange(callback) {
   };
 
   window.addEventListener(PROFILE_UPDATE_EVENT, handler);
+
   return () => {
+    if (typeof firestoreUnsub === "function") {
+      firestoreUnsub();
+    }
     window.removeEventListener(PROFILE_UPDATE_EVENT, handler);
   };
 }
