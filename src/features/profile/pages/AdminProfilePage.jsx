@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 
 import {
   PRESET_DEPARTMENTS,
-  PRESET_POSITIONS
+  PRESET_POSITIONS,
+  getInitials
 } from "../services/profileService";
 import { useAdminProfileSync } from "../context/AdminProfileContext";
 
@@ -78,7 +79,6 @@ function AdminProfilePage() {
     profile,
     loading,
     isSyncing,
-    initials,
     updateProfile
   } = useAdminProfileSync();
 
@@ -147,7 +147,17 @@ function AdminProfilePage() {
       }
     } catch (err) {
       console.error("Save profile error:", err);
-      setErrorMessage(err.message || "Failed to update admin profile.");
+      const isPermissionError =
+        err?.code === "permission-denied" ||
+        String(err?.message || "").toLowerCase().includes("permission");
+
+      if (isPermissionError) {
+        setErrorMessage(
+          "Missing or insufficient permissions: Firestore Security Rules prevented updating /admins/{uid}. Please publish the updated firestore.rules to your Firebase project to allow admin profile updates."
+        );
+      } else {
+        setErrorMessage(err.message || "Failed to update admin profile.");
+      }
     } finally {
       setSaving(false);
     }
@@ -235,7 +245,7 @@ function AdminProfilePage() {
       {/* HERO BANNER CARD */}
       <section className="admin-profile-hero">
         <div className="admin-profile-avatar-large">
-          <span>{initials}</span>
+          <span>{getInitials(name || profile?.name || "Admin User")}</span>
         </div>
 
         <div className="admin-profile-hero-info">

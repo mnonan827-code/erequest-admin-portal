@@ -1,0 +1,455 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: admins
+    // Document ID: {userId} (Firebase Auth UID of administrator)
+    // Fields:
+    //   - name: string (required, 2-100 chars) - Full name of administrator
+    //   - position: string (required, 2-100 chars) - Role/position designation
+    //   - department: string (required, 2-100 chars) - Office/department assignment
+    //   - email: string (required, 5-150 chars, valid email format) - Admin email
+    //   - phone: string (optional, 0-30 chars) - Contact phone number
+    //   - role: string (required, exact value 'admin') - Access role
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //
+    // Collection: services
+    // Document ID: {serviceId} (Normalized slug, e.g., 'registrar')
+    // Fields:
+    //   - name: string (required, 1-100 chars) - Department service name
+    //   - description: string (required, 0-1000 chars) - Detailed description
+    //   - isActive: bool (required) - Active visibility state
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //
+    // Collection: transactions
+    // Document ID: {transactionId} (Normalized slug, e.g., 'getting_prospectus')
+    // Fields:
+    //   - serviceId: string (required, 1-100 chars) - Parent service identifier
+    //   - name: string (required, 1-100 chars) - Transaction title
+    //   - description: string (optional, 0-2000 chars) - Procedure summary
+    //   - officeName: string (optional, 0-200 chars) - Responsible school office
+    //   - officeSchedule: string (optional, 0-200 chars) - Operating hours / schedule
+    //   - isActive: bool (required) - Active visibility state
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //
+    // Collection: requirements
+    // Document ID: {requirementId} (Hierarchical slug, e.g., 'getting_prospectus_valid_id')
+    // Fields:
+    //   - transactionId: string (required, 1-100 chars) - Parent transaction identifier
+    //   - requirementText: string (required, 1-1000 chars) - Requirement instructions
+    //   - displayOrder: number (required, >= 1) - Presentation order index
+    //   - isActive: bool (required) - Active visibility state
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //
+    // Collection: procedure_steps
+    // Document ID: {stepId} (Hierarchical step slug, e.g., 'getting_prospectus_step_001')
+    // Fields:
+    //   - transactionId: string (required, 1-100 chars) - Parent transaction identifier
+    //   - stepNumber: number (required, >= 1) - Sequential step number
+    //   - instruction: string (required, 1-2000 chars) - Step walkthrough text
+    //   - remoteImageUrl: string (optional, 0-1000 chars) - Public image URL
+    //   - localImagePath: string (optional, 0-500 chars) - Local asset path
+    //   - imageCaption: string (optional, 0-500 chars) - Image caption
+    //   - websiteName: string (optional, 0-200 chars) - External reference title
+    //   - websiteUrl: string (optional, 0-1000 chars) - External link URL
+    //   - isActive: bool (required) - Active visibility state
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //
+    // Collection: department_guidelines
+    // Document ID: {guidelineId} (Hierarchical slug, e.g., 'registrar_guideline_001')
+    // Fields:
+    //   - transactionId: string (optional if serviceId present, 1-100 chars)
+    //   - serviceId: string (optional if transactionId present, 1-100 chars)
+    //   - guidelineText: string (required, 1-1000 chars) - Guideline description
+    //   - displayOrder: number (required, >= 1) - Presentation order index
+    //   - isActive: bool (required) - Active visibility state
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //
+    // Collection: announcements
+    // Document ID: {announcementId} (Auto-generated Firestore ID)
+    // Fields:
+    //   - title: string (required, 1-200 chars) - Announcement headline
+    //   - message: string (required, 1-5000 chars) - Announcement body
+    //   - displayOrder: number (required) - Presentation sorting priority
+    //   - isActive: bool (required) - Active broadcast status
+    //   - datePosted: timestamp | string (optional, max 50 chars, immutable) - Post timestamp
+    //   - createdAt: timestamp | string (optional, max 50 chars, immutable) - Creation timestamp
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Modification timestamp
+    //
+    // Collection: activity_logs
+    // Document ID: {logId} (Auto-generated Firestore ID)
+    // Fields:
+    //   - type: string (required, 1-50 chars) - Entity type (service, transaction, etc.)
+    //   - action: string (required, 1-50 chars) - Action taken (added, updated, deleted, etc.)
+    //   - title: string (required, 1-200 chars) - Name of altered record
+    //   - description: string (optional, 0-1000 chars) - Action summary
+    //   - parentName: string (optional, 0-200 chars) - Parent entity name
+    //   - parentId: string (optional, 0-100 chars) - Parent entity ID
+    //   - recordId: string (optional, 0-100 chars) - Altered record ID
+    //   - createdAt: timestamp | string (required, max 50 chars) - Event timestamp
+    //
+    // Collection: device_tokens
+    // Document ID: {installationId} (36-char canonical UUIDv4)
+    // Fields:
+    //   - installationId: string (required, 36 chars UUID) - Device installation ID
+    //   - token: string (required, 20-4096 chars) - FCM push token
+    //   - platform: string (required, exact value 'android') - Device platform
+    //   - active: bool (required) - Token active status
+    //   - updatedAt: timestamp | string (required, max 50 chars) - Registration timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if requesting user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if user owns the resource path
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Check if requesting user has a designated bootstrap admin email
+    function isDesignatedAdminEmail() {
+      return isAuthenticated() &&
+        'email' in request.auth.token &&
+        (
+          request.auth.token.email in ['erequesticctadmin@gmail.com', 'erequestadmin@gmail.com'] ||
+          request.auth.token.email.matches('(?i)^(erequesticctadmin|erequestadmin)@gmail\\.com$')
+        );
+    }
+
+    // Check if requesting user is an authorized administrator
+    function isAdmin() {
+      return isAuthenticated() && (
+        isDesignatedAdminEmail() ||
+        (
+          exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'admin'
+        )
+      );
+    }
+
+    // Validate email format
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() >= 5 &&
+        email.size() <= 150 &&
+        email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    // Validate UUID format (canonical 36-char hyphenated UUID string)
+    function isValidUUID(uuid) {
+      return uuid is string &&
+        uuid.size() == 36 &&
+        uuid.matches('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+    }
+
+    // Validate FCM push token string
+    function isValidFCMToken(token) {
+      return token is string &&
+        token.size() >= 20 &&
+        token.size() <= 4096 &&
+        token.matches('^[a-zA-Z0-9_:\\-\\.~%]+$');
+    }
+
+    // Validate required fields exist in incoming resource
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    // Validate that document contains only the allowed fields
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    // Validate that immutable fields have not been altered
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    // Validate timestamp or backward-compatible ISO string
+    function isValidTimestampField(val) {
+      return val is timestamp || (val is string && val.size() <= 50);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    // Validate admin document schema & values
+    function isValidAdmin(data) {
+      return hasOnlyAllowedFields(['name', 'position', 'department', 'phone', 'email', 'role', 'updatedAt', 'createdAt']) &&
+        hasRequiredFields(['name', 'position', 'department', 'email', 'role', 'updatedAt']) &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+        data.position is string && data.position.size() >= 2 && data.position.size() <= 100 &&
+        data.department is string && data.department.size() >= 2 && data.department.size() <= 100 &&
+        data.email is string && isValidEmail(data.email) &&
+        (!('phone' in data) || (data.phone is string && data.phone.size() <= 30)) &&
+        data.role == 'admin' &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate service document schema & values
+    function isValidService(data) {
+      return hasOnlyAllowedFields(['name', 'description', 'isActive', 'createdAt', 'updatedAt']) &&
+        hasRequiredFields(['name', 'description', 'isActive', 'updatedAt']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.description is string && data.description.size() <= 1000 &&
+        data.isActive is bool &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate transaction document schema & values
+    function isValidTransaction(data) {
+      return hasOnlyAllowedFields([
+          'serviceId', 'name', 'description', 'officeName', 'officeSchedule',
+          'isActive', 'createdAt', 'updatedAt'
+        ]) &&
+        hasRequiredFields(['serviceId', 'name', 'isActive', 'updatedAt']) &&
+        data.serviceId is string && data.serviceId.size() >= 1 && data.serviceId.size() <= 100 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+        (!('officeName' in data) || (data.officeName is string && data.officeName.size() <= 200)) &&
+        (!('officeSchedule' in data) || (data.officeSchedule is string && data.officeSchedule.size() <= 200)) &&
+        data.isActive is bool &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate requirement document schema & values
+    function isValidRequirement(data) {
+      return hasOnlyAllowedFields([
+          'transactionId', 'requirementText', 'displayOrder',
+          'isActive', 'createdAt', 'updatedAt'
+        ]) &&
+        hasRequiredFields(['transactionId', 'requirementText', 'displayOrder', 'isActive', 'updatedAt']) &&
+        data.transactionId is string && data.transactionId.size() >= 1 && data.transactionId.size() <= 100 &&
+        data.requirementText is string && data.requirementText.size() >= 1 && data.requirementText.size() <= 1000 &&
+        data.displayOrder is number && data.displayOrder >= 1 &&
+        data.isActive is bool &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate procedure step document schema & values
+    function isValidProcedureStep(data) {
+      return hasOnlyAllowedFields([
+          'transactionId', 'stepNumber', 'instruction',
+          'remoteImageUrl', 'localImagePath', 'imageCaption',
+          'websiteName', 'websiteUrl', 'isActive',
+          'createdAt', 'updatedAt'
+        ]) &&
+        hasRequiredFields(['transactionId', 'stepNumber', 'instruction', 'isActive', 'updatedAt']) &&
+        data.transactionId is string && data.transactionId.size() >= 1 && data.transactionId.size() <= 100 &&
+        data.stepNumber is number && data.stepNumber >= 1 &&
+        data.instruction is string && data.instruction.size() >= 1 && data.instruction.size() <= 2000 &&
+        (!('remoteImageUrl' in data) || (data.remoteImageUrl is string && data.remoteImageUrl.size() <= 1000)) &&
+        (!('localImagePath' in data) || (data.localImagePath is string && data.localImagePath.size() <= 500)) &&
+        (!('imageCaption' in data) || (data.imageCaption is string && data.imageCaption.size() <= 500)) &&
+        (!('websiteName' in data) || (data.websiteName is string && data.websiteName.size() <= 200)) &&
+        (!('websiteUrl' in data) || (data.websiteUrl is string && data.websiteUrl.size() <= 1000)) &&
+        data.isActive is bool &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate department guideline document schema & values
+    function isValidGuideline(data) {
+      return hasOnlyAllowedFields([
+          'transactionId', 'serviceId', 'guidelineText', 'displayOrder',
+          'isActive', 'createdAt', 'updatedAt'
+        ]) &&
+        hasRequiredFields(['guidelineText', 'displayOrder', 'isActive', 'updatedAt']) &&
+        (
+          ('transactionId' in data && data.transactionId is string && data.transactionId.size() >= 1 && data.transactionId.size() <= 100) ||
+          ('serviceId' in data && data.serviceId is string && data.serviceId.size() >= 1 && data.serviceId.size() <= 100)
+        ) &&
+        data.guidelineText is string && data.guidelineText.size() >= 1 && data.guidelineText.size() <= 1000 &&
+        data.displayOrder is number && data.displayOrder >= 1 &&
+        data.isActive is bool &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate announcement document schema & values
+    function isValidAnnouncement(data) {
+      return hasOnlyAllowedFields([
+          'title', 'message', 'displayOrder',
+          'isActive', 'datePosted', 'createdAt', 'updatedAt'
+        ]) &&
+        hasRequiredFields(['title', 'message', 'displayOrder', 'isActive', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 5000 &&
+        data.displayOrder is number &&
+        data.isActive is bool &&
+        (!('datePosted' in data) || isValidTimestampField(data.datePosted)) &&
+        isValidTimestampField(data.updatedAt) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt));
+    }
+
+    // Validate activity log document schema & values
+    function isValidActivityLog(data) {
+      return hasOnlyAllowedFields([
+          'type', 'action', 'title', 'description',
+          'parentName', 'parentId', 'recordId', 'createdAt'
+        ]) &&
+        hasRequiredFields(['type', 'action', 'title', 'createdAt']) &&
+        data.type is string && data.type.size() >= 1 && data.type.size() <= 50 &&
+        data.action is string && data.action.size() >= 1 && data.action.size() <= 50 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        (!('parentName' in data) || (data.parentName is string && data.parentName.size() <= 200)) &&
+        (!('parentId' in data) || (data.parentId is string && data.parentId.size() <= 100)) &&
+        (!('recordId' in data) || (data.recordId is string && data.recordId.size() <= 100)) &&
+        isValidTimestampField(data.createdAt);
+    }
+
+    // Validate device push notification token schema & values
+    function isValidDeviceToken(data) {
+      return data.keys().hasOnly(['installationId', 'token', 'platform', 'active', 'updatedAt']) &&
+        data.keys().hasAll(['installationId', 'token', 'platform', 'active', 'updatedAt']) &&
+        isValidUUID(data.installationId) &&
+        isValidFCMToken(data.token) &&
+        data.platform == 'android' &&
+        data.active is bool &&
+        isValidTimestampField(data.updatedAt);
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // 1. ADMINS COLLECTION
+    // Read: Authenticated admin checking their own profile document
+    // Create / Update: Authenticated admin managing their own profile
+    // Privilege escalation prevented: only role 'admin' allowed, and user must be recognized admin
+    // Delete: Forbidden
+    match /admins/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+        (isDesignatedAdminEmail() || isAdmin()) &&
+        request.resource.data.role == 'admin' &&
+        isValidAdmin(request.resource.data);
+
+      allow update: if isOwner(userId) &&
+        (isDesignatedAdminEmail() || isAdmin()) &&
+        request.resource.data.role == 'admin' &&
+        isValidAdmin(request.resource.data) &&
+        areImmutableFieldsUnchanged(['createdAt']);
+
+      allow delete: if false;
+    }
+
+    // 2. SERVICES COLLECTION
+    // Read: Public (Student Android application + Web admin portal)
+    // Write: Authorized administrators only
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidService(request.resource.data);
+      allow update: if isAdmin() && isValidService(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 3. TRANSACTIONS COLLECTION
+    // Read: Public (Student Android application + Web admin portal)
+    // Write: Authorized administrators only
+    match /transactions/{transactionId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTransaction(request.resource.data);
+      allow update: if isAdmin() && isValidTransaction(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 4. REQUIREMENTS COLLECTION
+    // Read: Public (Student Android application + Web admin portal)
+    // Write: Authorized administrators only
+    match /requirements/{requirementId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidRequirement(request.resource.data);
+      allow update: if isAdmin() && isValidRequirement(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 5. PROCEDURE STEPS COLLECTION
+    // Read: Public (Student Android application + Web admin portal)
+    // Write: Authorized administrators only
+    match /procedure_steps/{stepId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidProcedureStep(request.resource.data);
+      allow update: if isAdmin() && isValidProcedureStep(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 6. DEPARTMENT GUIDELINES COLLECTION
+    // Read: Public (Student Android application + Web admin portal)
+    // Write: Authorized administrators only
+    match /department_guidelines/{guidelineId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidGuideline(request.resource.data);
+      allow update: if isAdmin() && isValidGuideline(request.resource.data) && areImmutableFieldsUnchanged(['createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // 7. ANNOUNCEMENTS COLLECTION
+    // Read: Public (Student Android application + Web admin portal)
+    // Write: Authorized administrators only
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidAnnouncement(request.resource.data);
+      allow update: if isAdmin() && isValidAnnouncement(request.resource.data) && areImmutableFieldsUnchanged(['createdAt', 'datePosted']);
+      allow delete: if isAdmin();
+    }
+
+    // 8. ACTIVITY LOGS COLLECTION
+    // Read / Create: Authorized administrators only
+    // Update / Delete: Strictly forbidden (immutable audit trail)
+    match /activity_logs/{logId} {
+      allow read, create: if isAdmin() && isValidActivityLog(request.resource.data);
+      allow update, delete: if false;
+    }
+
+    // 9. DEVICE TOKENS COLLECTION
+    // Read: Strictly forbidden for all client SDKs
+    // Create / Update: Unauthenticated Android FCM token registration with strict validation
+    // Delete: Strictly forbidden
+    match /device_tokens/{installationId} {
+      allow read: if false;
+
+      allow create: if installationId == request.resource.data.installationId &&
+        isValidDeviceToken(request.resource.data) &&
+        request.resource.data.active == true;
+
+      allow update: if installationId == request.resource.data.installationId &&
+        request.resource.data.installationId == resource.data.installationId &&
+        request.resource.data.platform == resource.data.platform &&
+        isValidDeviceToken(request.resource.data);
+
+      allow delete: if false;
+    }
+
+    // ===============================================================
+    // Default Deny Root Fallback
+    // ===============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
