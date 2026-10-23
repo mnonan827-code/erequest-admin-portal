@@ -51,6 +51,13 @@ export const PRESET_POSITIONS = [
   "Student Services Coordinator"
 ];
 
+export const PRIMARY_ADMIN_UID = "uha6UPkMw4ajlIXe8hp1qkSqxwI2";
+export const KNOWN_ADMIN_UIDS = [
+  "uha6UPkMw4ajlIXe8hp1qkSqxwI2", // erequesticctadmin@gmail.com
+  "RitMvAmyajPOG8PzDeYEjiCBOzC2", // erequestadmin@gmail.com
+  "eDt4PFlPTKbM0sZ29Ru1d3yGoGb2"  // admin.erequesticct@gmail.com
+];
+
 const PROFILE_STORAGE_PREFIX = "erequest_admin_profile_";
 const ACTIVE_PROFILE_STORAGE_KEY = "erequest_admin_active_profile";
 const PROFILE_UPDATE_EVENT = "admin-profile-updated";
@@ -289,6 +296,28 @@ export async function updateAdminProfile(updatedFields = {}, userId) {
   const adminDocRef = doc(db, "admins", currentUid);
   await setDoc(adminDocRef, payload, { merge: true });
 
+  // 2b. Synchronize companion admin documents so all sessions across all devices stay identical
+  for (const companionUid of KNOWN_ADMIN_UIDS) {
+    if (companionUid === currentUid) continue;
+    try {
+      const compRef = doc(db, "admins", companionUid);
+      setDoc(
+        compRef,
+        {
+          name: cleanName,
+          position: cleanPosition,
+          department: cleanDepartment,
+          phone: cleanPhone,
+          role: "admin",
+          updatedAt: nowIso
+        },
+        { merge: true }
+      ).catch(() => {});
+    } catch {
+      // Non-blocking companion sync
+    }
+  }
+
   // 3. Update Firebase Auth displayName if changed
   if (auth.currentUser && auth.currentUser.displayName !== cleanName) {
     try {
@@ -330,10 +359,10 @@ export async function updateAdminProfile(updatedFields = {}, userId) {
  * @returns {function(): void} Unsubscribe function
  */
 export function subscribeToAdminProfile(userIdOrCallback, onUpdateOrCallback, onError) {
-  const targetUid =
-    typeof userIdOrCallback === "function"
-      ? auth.currentUser?.uid || null
-      : userIdOrCallback || auth.currentUser?.uid || null;
+  const explicitUid =
+    typeof userIdOrCallback === "string" && userIdOrCallback.trim()
+      ? userIdOrCallback.trim()
+      : null;
 
   const updateCallback =
     typeof userIdOrCallback === "function" ? userIdOrCallback : onUpdateOrCallback;
@@ -345,36 +374,42 @@ export function subscribeToAdminProfile(userIdOrCallback, onUpdateOrCallback, on
     return () => {};
   }
 
-  // If user is not yet loaded in auth state, wait for auth to establish UID
-  if (!targetUid && typeof auth?.onAuthStateChanged === "function") {
-    let docUnsub = null;
-    let isCleanedUp = false;
-
-    const authUnsub = auth.onAuthStateChanged((user) => {
-      if (isCleanedUp) return;
-      if (user?.uid) {
-        if (docUnsub) docUnsub();
-        docUnsub = subscribeToAdminDoc(user.uid, updateCallback, errorCallback);
-      }
-    });
-
-    return () => {
-      isCleanedUp = true;
-      if (authUnsub) authUnsub();
-      if (docUnsub) docUnsub();
-    };
+  // If explicit UID was provided, subscribe directly to that document
+  if (explicitUid) {
+    return subscribeToAdminDoc(explicitUid, updateCallback, errorCallback);
   }
 
-  if (!targetUid) {
-    const fallback = {
-      ...DEFAULT_PROFILE,
-      email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
-    };
-    updateCallback(fallback);
-    return () => {};
+  // Otherwise, reactively track the authenticated user's UID to keep the subscription current
+  let docUnsub = null;
+  let isCleanedUp = false;
+
+  const currentUid = auth.currentUser?.uid;
+  if (currentUid) {
+    docUnsub = subscribeToAdminDoc(currentUid, updateCallback, errorCallback);
   }
 
-  return subscribeToAdminDoc(targetUid, updateCallback, errorCallback);
+  const authUnsub =
+    typeof auth?.onAuthStateChanged === "function"
+      ? auth.onAuthStateChanged((user) => {
+          if (isCleanedUp) return;
+          const targetUid = user?.uid || auth.currentUser?.uid;
+          if (targetUid) {
+            if (docUnsub) docUnsub();
+            docUnsub = subscribeToAdminDoc(targetUid, updateCallback, errorCallback);
+          } else {
+            updateCallback({
+              ...DEFAULT_PROFILE,
+              email: DEFAULT_ADMIN_EMAIL
+            });
+          }
+        })
+      : null;
+
+  return () => {
+    isCleanedUp = true;
+    if (typeof authUnsub === "function") authUnsub();
+    if (typeof docUnsub === "function") docUnsub();
+  };
 }
 
 /**
@@ -406,12 +441,32 @@ function subscribeToAdminDoc(uid, onUpdate, onError) {
 
             onUpdate(resolved);
           } else {
-            // Document doesn't exist yet in Firestore, emit clean default
-            const defaultDoc = {
-              ...DEFAULT_PROFILE,
-              email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
-            };
-            onUpdate(defaultDoc);
+            // If doc doesn't exist for this UID yet, inherit from primary admin doc
+            if (uid !== PRIMARY_ADMIN_UID) {
+              const primaryRef = doc(db, "admins", PRIMARY_ADMIN_UID);
+              getDoc(primaryRef)
+                .then((pSnap) => {
+                  if (pSnap.exists()) {
+                    onUpdate(normalizeProfileData(pSnap.data(), uid));
+                  } else {
+                    onUpdate({
+                      ...DEFAULT_PROFILE,
+                      email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+                    });
+                  }
+                })
+                .catch(() => {
+                  onUpdate({
+                    ...DEFAULT_PROFILE,
+                    email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+                  });
+                });
+            } else {
+              onUpdate({
+                ...DEFAULT_PROFILE,
+                email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+              });
+            }
           }
         } catch (err) {
           console.warn("Failed to process real-time admin profile update:", err);

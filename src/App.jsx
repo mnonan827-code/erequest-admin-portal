@@ -40,9 +40,6 @@ const AnnouncementsPage =
 const AddAnnouncementPage =
   lazy(() => import("./features/announcements/pages/AddAnnouncementPage"));
 
-const RequirementsPage =
-  lazy(() => import("./features/requirements/pages/RequirementsPage"));
-
 const AdminProfilePage =
   lazy(() => import("./features/profile/pages/AdminProfilePage"));
 
@@ -172,11 +169,16 @@ function App() {
             />
 
 
-            {/* REQUIREMENTS */}
+            {/* REDIRECT LEGACY REQUIREMENTS */}
 
             <Route
               path="/requirements"
-              element={<RequirementsPage />}
+              element={
+                <Navigate
+                  to="/transactions"
+                  replace
+                />
+              }
             />
 
 

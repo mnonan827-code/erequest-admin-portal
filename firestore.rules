@@ -337,23 +337,17 @@ service cloud.firestore {
     // ===============================================================
 
     // 1. ADMINS COLLECTION
-    // Read: Authenticated admin checking their own profile document
-    // Create / Update: Authenticated admin managing their own profile
+    // Read: Authenticated administrator (own document, designated admin email, or verified admin)
+    // Create / Update: Authenticated administrator managing profile or syncing companion accounts
     // Privilege escalation prevented: only role 'admin' allowed, and user must be recognized admin
     // Delete: Forbidden
     match /admins/{userId} {
-      allow read: if isOwner(userId);
+      allow read: if isAuthenticated() && (isOwner(userId) || isDesignatedAdminEmail() || isAdmin());
 
-      allow create: if isOwner(userId) &&
-        (isDesignatedAdminEmail() || isAdmin()) &&
+      allow create, update: if isAuthenticated() &&
+        (isOwner(userId) || isDesignatedAdminEmail() || isAdmin()) &&
         request.resource.data.role == 'admin' &&
         isValidAdmin(request.resource.data);
-
-      allow update: if isOwner(userId) &&
-        (isDesignatedAdminEmail() || isAdmin()) &&
-        request.resource.data.role == 'admin' &&
-        isValidAdmin(request.resource.data) &&
-        areImmutableFieldsUnchanged(['createdAt']);
 
       allow delete: if false;
     }

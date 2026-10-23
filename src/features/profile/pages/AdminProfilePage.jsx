@@ -245,24 +245,24 @@ function AdminProfilePage() {
       {/* HERO BANNER CARD */}
       <section className="admin-profile-hero">
         <div className="admin-profile-avatar-large">
-          <span>{getInitials(name || profile?.name || "Admin User")}</span>
+          <span>{getInitials(isDirty ? name : profile?.name || name || "Admin User")}</span>
         </div>
 
         <div className="admin-profile-hero-info">
           <div className="admin-profile-hero-title-row">
-            <h2>{name || "Admin User"}</h2>
+            <h2>{isDirty ? name : profile?.name || name || "Admin User"}</h2>
             <span className="admin-profile-role-pill">Administrator</span>
           </div>
 
           <div className="admin-profile-hero-meta">
             <span className="admin-profile-meta-item" title="Position">
               <BriefcaseIcon />
-              <strong>Position:</strong> {position || "System Administrator"}
+              <strong>Position:</strong> {isDirty ? position : profile?.position || position || "System Administrator"}
             </span>
 
             <span className="admin-profile-meta-item" title="Department">
               <BuildingIcon />
-              <strong>Department:</strong> {department || "Registrar's Office"}
+              <strong>Department:</strong> {isDirty ? department : profile?.department || department || "Registrar's Office"}
             </span>
 
             <span className="admin-profile-meta-item" title="Email">
@@ -526,7 +526,7 @@ function AdminProfilePage() {
               </li>
               <li>
                 <span className="permission-bullet"></span>
-                <span>Manage Transactions, Procedures & Requirements</span>
+                <span>Manage Transactions & Step-by-Step Procedures</span>
               </li>
               <li>
                 <span className="permission-bullet"></span>

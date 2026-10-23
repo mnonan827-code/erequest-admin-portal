@@ -155,7 +155,7 @@ function ProtectedRoute() {
 
 
   return (
-    <AdminProfileProvider>
+    <AdminProfileProvider userId={auth.currentUser?.uid}>
       <Outlet />
     </AdminProfileProvider>
   );
