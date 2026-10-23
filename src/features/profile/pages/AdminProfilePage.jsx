@@ -166,12 +166,12 @@ function AdminProfilePage() {
     }
   };
 
-  if (loading && !profile) {
+  if (loading) {
     return (
       <div className="admin-profile-page">
         <div className="admin-profile-loading">
-          <div className="admin-profile-spinner"></div>
-          <p>Loading administrator profile...</p>
+          <div className="admin-profile-spinner" />
+          <p>Loading administrator profile from cloud...</p>
         </div>
       </div>
     );

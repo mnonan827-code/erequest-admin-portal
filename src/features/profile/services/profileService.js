@@ -166,41 +166,45 @@ export function cacheAdminProfile(profileData, userId) {
 }
 
 /**
- * Normalizes raw admin document data against defaults and cache.
+ * Normalizes raw admin document data against defaults.
+ * Cloud-First: Always prefers live Firestore data over any local fallback.
  */
-export function normalizeProfileData(raw = {}, uid, cached = null) {
+export function normalizeProfileData(raw = {}, uid, fallback = null) {
   const currentEmail =
-    auth.currentUser?.email || raw.email || cached?.email || DEFAULT_ADMIN_EMAIL;
+    raw.email || auth.currentUser?.email || fallback?.email || DEFAULT_ADMIN_EMAIL;
 
   return {
     name:
       raw.name ||
       auth.currentUser?.displayName ||
-      cached?.name ||
+      fallback?.name ||
       DEFAULT_PROFILE.name,
     position:
-      raw.position || cached?.position || DEFAULT_PROFILE.position,
+      raw.position || fallback?.position || DEFAULT_PROFILE.position,
     department:
-      raw.department || cached?.department || DEFAULT_PROFILE.department,
-    email: raw.email || currentEmail,
-    phone: raw.phone || cached?.phone || "",
+      raw.department || fallback?.department || DEFAULT_PROFILE.department,
+    email: currentEmail,
+    phone: raw.phone || fallback?.phone || "",
     role:
       raw.role === "admin"
         ? "Administrator"
-        : raw.role || cached?.role || "Administrator",
-    updatedAt: raw.updatedAt || cached?.updatedAt || null
+        : raw.role || fallback?.role || "Administrator",
+    updatedAt: raw.updatedAt || fallback?.updatedAt || null
   };
 }
 
 /**
- * Loads the admin profile from Firestore (admins/{userId}), falling back to cache.
+ * Loads the admin profile directly from Cloud Firestore (admins/{userId}).
+ * Single source of truth: Firebase Cloud Firestore.
  */
 export async function getAdminProfile(userId) {
   const currentUid = userId || auth.currentUser?.uid;
-  const cached = getCachedAdminProfile(currentUid);
 
   if (!currentUid) {
-    return cached;
+    return {
+      ...DEFAULT_PROFILE,
+      email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+    };
   }
 
   try {
@@ -208,31 +212,54 @@ export async function getAdminProfile(userId) {
     const snap = await getDoc(adminDocRef);
 
     if (snap.exists()) {
-      const data = snap.data();
-      const resolvedProfile = normalizeProfileData(data, currentUid, cached);
-      cacheAdminProfile(resolvedProfile, currentUid);
-      return resolvedProfile;
+      return normalizeProfileData(snap.data(), currentUid);
     }
   } catch (err) {
     console.warn("Firestore admin profile read notice:", err.message);
   }
 
-  return cached;
+  return {
+    ...DEFAULT_PROFILE,
+    email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+  };
 }
 
 /**
- * Updates the admin profile with name, position, and department in Firestore and local state.
+ * Updates the admin profile directly in Cloud Firestore.
+ * Once written, Firestore onSnapshot automatically broadcasts changes to all active devices.
  */
 export async function updateAdminProfile(updatedFields = {}, userId) {
   const currentUid = userId || auth.currentUser?.uid;
+  if (!currentUid) {
+    throw new Error("Administrator must be signed in to update profile.");
+  }
+
   const currentEmail = auth.currentUser?.email || DEFAULT_ADMIN_EMAIL;
 
-  const currentProfile = getCachedAdminProfile(currentUid);
+  // Retrieve current live cloud data to preserve unchanged fields
+  let currentRemote = {};
+  try {
+    const adminDocRef = doc(db, "admins", currentUid);
+    const snap = await getDoc(adminDocRef);
+    if (snap.exists()) {
+      currentRemote = snap.data();
+    }
+  } catch {
+    // If read fails, proceed with defaults
+  }
 
-  const cleanName = String(updatedFields.name ?? currentProfile.name).trim();
-  const cleanPosition = String(updatedFields.position ?? currentProfile.position).trim();
-  const cleanDepartment = String(updatedFields.department ?? currentProfile.department).trim();
-  const cleanPhone = String(updatedFields.phone ?? currentProfile.phone ?? "").trim();
+  const cleanName = String(
+    updatedFields.name ?? currentRemote.name ?? DEFAULT_PROFILE.name
+  ).trim();
+  const cleanPosition = String(
+    updatedFields.position ?? currentRemote.position ?? DEFAULT_PROFILE.position
+  ).trim();
+  const cleanDepartment = String(
+    updatedFields.department ?? currentRemote.department ?? DEFAULT_PROFILE.department
+  ).trim();
+  const cleanPhone = String(
+    updatedFields.phone ?? currentRemote.phone ?? ""
+  ).trim();
 
   // 1. Validation
   const validation = validateProfile({
@@ -248,42 +275,21 @@ export async function updateAdminProfile(updatedFields = {}, userId) {
 
   const nowIso = new Date().toISOString();
 
-  const fullProfile = {
-    ...currentProfile,
+  const payload = {
     name: cleanName,
     position: cleanPosition,
     department: cleanDepartment,
     phone: cleanPhone,
     email: currentEmail,
-    role: "Administrator",
+    role: "admin",
     updatedAt: nowIso
   };
 
-  // 2. Persist to Firestore if authenticated
-  let firestoreSaved = false;
-  if (currentUid) {
-    try {
-      const adminDocRef = doc(db, "admins", currentUid);
-      await setDoc(
-        adminDocRef,
-        {
-          name: cleanName,
-          position: cleanPosition,
-          department: cleanDepartment,
-          phone: cleanPhone,
-          email: currentEmail,
-          role: "admin",
-          updatedAt: nowIso
-        },
-        { merge: true }
-      );
-      firestoreSaved = true;
-    } catch (err) {
-      console.warn("Firestore admin profile write notice:", err.message);
-    }
-  }
+  // 2. Direct Write to Cloud Firestore (Single Source of Truth)
+  const adminDocRef = doc(db, "admins", currentUid);
+  await setDoc(adminDocRef, payload, { merge: true });
 
-  // 3. Update Firebase Auth displayName if available
+  // 3. Update Firebase Auth displayName if changed
   if (auth.currentUser && auth.currentUser.displayName !== cleanName) {
     try {
       await updateAuthProfile(auth.currentUser, { displayName: cleanName });
@@ -292,37 +298,25 @@ export async function updateAdminProfile(updatedFields = {}, userId) {
     }
   }
 
-  // 4. Update local cache
-  cacheAdminProfile(fullProfile, currentUid);
-
-  // 5. Broadcast change event across application
-  if (typeof window !== "undefined") {
-    try {
-      window.dispatchEvent(
-        new CustomEvent(PROFILE_UPDATE_EVENT, { detail: fullProfile })
-      );
-    } catch {
-      // Ignore if event dispatch fails in restricted environments
-    }
-  }
-
-  // 6. Record activity log if possible
+  // 4. Record Activity Log (Non-blocking)
   try {
     await addActivityLog({
       type: "admin_profile",
       action: "updated",
       title: `Profile updated for ${cleanName}`,
       description: `Position: ${cleanPosition} | Department: ${cleanDepartment}`,
-      recordId: currentUid || "admin"
+      recordId: currentUid
     });
   } catch (logErr) {
     console.warn("Profile activity log notice:", logErr.message);
   }
 
+  const resolvedProfile = normalizeProfileData(payload, currentUid);
+
   return {
     success: true,
-    profile: fullProfile,
-    firestoreSaved
+    profile: resolvedProfile,
+    firestoreSaved: true
   };
 }
 
@@ -372,8 +366,11 @@ export function subscribeToAdminProfile(userIdOrCallback, onUpdateOrCallback, on
   }
 
   if (!targetUid) {
-    const cached = getCachedAdminProfile();
-    updateCallback(cached);
+    const fallback = {
+      ...DEFAULT_PROFILE,
+      email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+    };
+    updateCallback(fallback);
     return () => {};
   }
 
@@ -382,6 +379,7 @@ export function subscribeToAdminProfile(userIdOrCallback, onUpdateOrCallback, on
 
 /**
  * Attaches Firestore onSnapshot listener to the specific admin document.
+ * Cloud-First: Live Firestore document (/admins/{uid}) is the sole authority.
  */
 function subscribeToAdminDoc(uid, onUpdate, onError) {
   try {
@@ -391,13 +389,9 @@ function subscribeToAdminDoc(uid, onUpdate, onError) {
       adminDocRef,
       (snapshot) => {
         try {
-          const cached = getCachedAdminProfile(uid);
           if (snapshot.exists()) {
             const data = snapshot.data();
-            const resolved = normalizeProfileData(data, uid, cached);
-
-            // Keep local storage updated with authoritative remote state
-            cacheAdminProfile(resolved, uid);
+            const resolved = normalizeProfileData(data, uid);
 
             // Notify local tab listeners
             if (typeof window !== "undefined") {
@@ -412,8 +406,12 @@ function subscribeToAdminDoc(uid, onUpdate, onError) {
 
             onUpdate(resolved);
           } else {
-            // Document doesn't exist yet, emit cached or default fallback
-            onUpdate(cached);
+            // Document doesn't exist yet in Firestore, emit clean default
+            const defaultDoc = {
+              ...DEFAULT_PROFILE,
+              email: auth.currentUser?.email || DEFAULT_ADMIN_EMAIL
+            };
+            onUpdate(defaultDoc);
           }
         } catch (err) {
           console.warn("Failed to process real-time admin profile update:", err);
@@ -424,9 +422,6 @@ function subscribeToAdminDoc(uid, onUpdate, onError) {
       },
       (error) => {
         console.warn("Firestore real-time profile listener notice:", error?.message || error);
-        // Fallback to cached profile to prevent UI interruption
-        const cached = getCachedAdminProfile(uid);
-        onUpdate(cached);
         if (typeof onError === "function") {
           onError(error);
         }

@@ -5,11 +5,12 @@ import {
 
 import {
   DEFAULT_PROFILE,
-  getCachedAdminProfile,
   updateAdminProfile,
   getAdminProfile,
   getInitials
 } from "../services/profileService";
+
+import { auth } from "../../../firebase/firebaseConfig";
 
 export const AdminProfileContext = createContext(null);
 
@@ -19,15 +20,18 @@ export const AdminProfileContext = createContext(null);
 export function useAdminProfile() {
   const context = useContext(AdminProfileContext);
   if (!context) {
-    // Graceful fallback if called outside provider
-    const fallbackProfile = getCachedAdminProfile();
+    // Graceful memory-only fallback if called outside provider
+    const fallbackProfile = {
+      ...DEFAULT_PROFILE,
+      email: auth?.currentUser?.email || DEFAULT_PROFILE.email
+    };
     return {
       profile: fallbackProfile,
       loading: false,
       error: null,
       isSyncing: false,
       lastSyncTime: null,
-      initials: getInitials(fallbackProfile?.name || DEFAULT_PROFILE.name),
+      initials: getInitials(fallbackProfile.name),
       updateProfile: updateAdminProfile,
       refreshProfile: getAdminProfile
     };

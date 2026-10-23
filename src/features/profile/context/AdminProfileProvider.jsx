@@ -7,22 +7,25 @@ import {
 
 import {
   DEFAULT_PROFILE,
-  getCachedAdminProfile,
   subscribeToAdminProfile,
   updateAdminProfile,
   getAdminProfile,
   getInitials
 } from "../services/profileService";
 
+import { auth } from "../../../firebase/firebaseConfig";
 import { AdminProfileContext } from "./AdminProfileContext";
 
 /**
  * Provides real-time synchronized admin profile state to all child components.
  * Subscribes to Firestore onSnapshot on mount and cleanly unsubscribes on unmount.
+ * Cloud-First Single Source of Truth: Firestore (/admins/{uid}) without local storage caching.
  */
 export function AdminProfileProvider({ children, userId }) {
-  // Hydrate immediately from cache to ensure 0ms initial render with zero layout shift
-  const [profile, setProfile] = useState(() => getCachedAdminProfile(userId));
+  const [profile, setProfile] = useState(() => ({
+    ...DEFAULT_PROFILE,
+    email: auth?.currentUser?.email || DEFAULT_PROFILE.email
+  }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
