@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 import {
-  getRecentActivityLogs,
+  subscribeToRecentActivityLogs,
   formatActivityDateTime
 } from "../services/activityLogService";
 
@@ -173,7 +173,7 @@ function DashboardPage() {
 
 
   /* =========================================================
-     LOAD DASHBOARD DATA
+     LOAD DASHBOARD DATA & REAL-TIME ACTIVITY LISTENER
      ========================================================= */
 
   useEffect(() => {
@@ -212,27 +212,30 @@ function DashboardPage() {
       }
     }
 
-    async function fetchRecentUpdates() {
-      try {
-        const activities = await getRecentActivityLogs();
+    fetchDashboardData();
 
+    // Subscribe to real-time activity logs with onSnapshot
+    const unsubscribe = subscribeToRecentActivityLogs(
+      (activities) => {
         if (!ignore) {
-          setRecentActivities(activities.slice(0, 5));
+          setRecentActivities(activities);
+          setRecentLoading(false);
         }
-      } catch (error) {
-        console.error("Recent updates error:", error);
-      } finally {
+      },
+      (error) => {
+        console.error("Recent updates subscription error:", error);
         if (!ignore) {
           setRecentLoading(false);
         }
-      }
-    }
-
-    fetchDashboardData();
-    fetchRecentUpdates();
+      },
+      15
+    );
 
     return () => {
       ignore = true;
+      if (typeof unsubscribe === "function") {
+        unsubscribe();
+      }
     };
   }, []);
 
@@ -350,7 +353,7 @@ function DashboardPage() {
           </div>
 
           <span className="recent-updates-count">
-            Latest 5
+            Latest 15
           </span>
 
         </div>
@@ -413,14 +416,21 @@ function DashboardPage() {
 
                     {activity.title || "Updated record"}
 
-                    {activity.description
-                      ? ` — ${activity.description}`
+                    {(activity.description || activity.details)
+                      ? ` — ${activity.description || activity.details}`
                       : ""}
 
                   </span>
 
 
-                  {activity.parentName && (
+                  {activity.adminEmail && (
+                    <span className="recent-update-parent">
+                      Admin: {activity.adminEmail}
+                      {activity.parentName ? ` • ${activity.parentName}` : ""}
+                    </span>
+                  )}
+
+                  {!activity.adminEmail && activity.parentName && (
                     <span className="recent-update-parent">
                       {activity.parentName}
                     </span>
@@ -430,8 +440,9 @@ function DashboardPage() {
 
 
                 <div className="recent-update-date">
-                  {formatActivityDateTime(activity.createdAt) ||
-                    "Just now"}
+                  {formatActivityDateTime(
+                    activity.createdAt || activity.timestamp
+                  ) || "Just now"}
                 </div>
 
               </div>

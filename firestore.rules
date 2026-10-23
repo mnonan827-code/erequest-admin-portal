@@ -92,11 +92,17 @@ service cloud.firestore {
     //   - type: string (required, 1-50 chars) - Entity type (service, transaction, etc.)
     //   - action: string (required, 1-50 chars) - Action taken (added, updated, deleted, etc.)
     //   - title: string (required, 1-200 chars) - Name of altered record
-    //   - description: string (optional, 0-1000 chars) - Action summary
+    //   - description: string (optional, 0-2000 chars) - Action summary
+    //   - details: string (optional, 0-2000 chars) - Detailed description
     //   - parentName: string (optional, 0-200 chars) - Parent entity name
     //   - parentId: string (optional, 0-100 chars) - Parent entity ID
     //   - recordId: string (optional, 0-100 chars) - Altered record ID
-    //   - createdAt: timestamp | string (required, max 50 chars) - Event timestamp
+    //   - adminEmail: string (optional, 0-150 chars) - Admin user email
+    //   - adminUid: string (optional, 0-100 chars) - Admin user UID
+    //   - adminName: string (optional, 0-100 chars) - Admin user display name
+    //   - createdAt: timestamp | string (optional, max 50 chars) - Creation timestamp
+    //   - timestamp: timestamp | string (optional, max 50 chars) - Event timestamp
+    //   (Note: at least one of createdAt or timestamp is required)
     //
     // Collection: device_tokens
     // Document ID: {installationId} (36-char canonical UUIDv4)
@@ -307,18 +313,25 @@ service cloud.firestore {
     // Validate activity log document schema & values
     function isValidActivityLog(data) {
       return hasOnlyAllowedFields([
-          'type', 'action', 'title', 'description',
-          'parentName', 'parentId', 'recordId', 'createdAt'
+          'type', 'action', 'title', 'description', 'details',
+          'parentName', 'parentId', 'recordId', 'createdAt', 'timestamp',
+          'adminEmail', 'adminUid', 'adminName'
         ]) &&
-        hasRequiredFields(['type', 'action', 'title', 'createdAt']) &&
+        hasRequiredFields(['type', 'action', 'title']) &&
         data.type is string && data.type.size() >= 1 && data.type.size() <= 50 &&
         data.action is string && data.action.size() >= 1 && data.action.size() <= 50 &&
         data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
-        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+        (!('details' in data) || (data.details is string && data.details.size() <= 2000)) &&
         (!('parentName' in data) || (data.parentName is string && data.parentName.size() <= 200)) &&
         (!('parentId' in data) || (data.parentId is string && data.parentId.size() <= 100)) &&
         (!('recordId' in data) || (data.recordId is string && data.recordId.size() <= 100)) &&
-        isValidTimestampField(data.createdAt);
+        (!('adminEmail' in data) || (data.adminEmail is string && data.adminEmail.size() <= 150)) &&
+        (!('adminUid' in data) || (data.adminUid is string && data.adminUid.size() <= 100)) &&
+        (!('adminName' in data) || (data.adminName is string && data.adminName.size() <= 100)) &&
+        ('createdAt' in data || 'timestamp' in data) &&
+        (!('createdAt' in data) || isValidTimestampField(data.createdAt)) &&
+        (!('timestamp' in data) || isValidTimestampField(data.timestamp));
     }
 
     // Validate device push notification token schema & values
@@ -413,10 +426,12 @@ service cloud.firestore {
     }
 
     // 8. ACTIVITY LOGS COLLECTION
-    // Read / Create: Authorized administrators only
+    // Read: Authorized administrators only
+    // Create: Authorized administrators only with strict schema validation
     // Update / Delete: Strictly forbidden (immutable audit trail)
     match /activity_logs/{logId} {
-      allow read, create: if isAdmin() && isValidActivityLog(request.resource.data);
+      allow read: if isAuthenticated() && (isAdmin() || isDesignatedAdminEmail());
+      allow create: if isAuthenticated() && (isAdmin() || isDesignatedAdminEmail()) && isValidActivityLog(request.resource.data);
       allow update, delete: if false;
     }
 
