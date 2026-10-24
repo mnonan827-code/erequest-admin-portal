@@ -11,7 +11,7 @@ import {
   cacheAdminProfile,
   normalizeProfileData,
   subscribeToAdminProfile
-} from "../src/features/profile/services/profileService.js";
+} from "../src/features/profile/profileService.js";
 
 test("Profile Constants: DEFAULT_PROFILE contains required name, position, department fields", () => {
   assert.ok(DEFAULT_PROFILE, "DEFAULT_PROFILE must exist");

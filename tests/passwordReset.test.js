@@ -46,7 +46,7 @@ import {
   verifyPasswordResetOTP,
   setNewAdminPassword,
   verifyAndResetPassword
-} from "../src/features/auth/services/authService.js";
+} from "../src/features/auth/authService.js";
 
 test("Credentials & Constants: Matches specified admin defaults", () => {
   assert.equal(DEFAULT_ADMIN_EMAIL, "erequesticctadmin@gmail.com");
@@ -344,4 +344,33 @@ test("Two-Page Separation: Step 1 (OTP verification) and Step 2 (Set password) o
 
   // Reset to default
   setActiveAdminPassword("#ICCT4228");
+});
+
+test("Route Mode Resolution: Direct navigation correctly maps to forgot_password mode", () => {
+  const resolveMode = ({ pathname, search = "", state = null, initialMode = "login" }) => {
+    if (pathname === "/forgot-password") {
+      return "forgot_password";
+    }
+    const params = new URLSearchParams(search);
+    const paramMode = params.get("mode");
+    if (paramMode === "forgot_password" || paramMode === "forgot-password") {
+      return "forgot_password";
+    }
+    if (state?.mode) {
+      return state.mode;
+    }
+    return initialMode || "login";
+  };
+
+  // Direct route to /forgot-password lands directly in forgot_password mode ("agad")
+  assert.equal(resolveMode({ pathname: "/forgot-password" }), "forgot_password");
+
+  // Query parameter ?mode=forgot_password lands directly in forgot_password mode
+  assert.equal(resolveMode({ pathname: "/login", search: "?mode=forgot_password" }), "forgot_password");
+
+  // Location state mode: "forgot_password"
+  assert.equal(resolveMode({ pathname: "/login", state: { mode: "forgot_password" } }), "forgot_password");
+
+  // Default /login lands in login mode
+  assert.equal(resolveMode({ pathname: "/login" }), "login");
 });

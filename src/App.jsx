@@ -11,37 +11,37 @@ import {
 } from "react-router-dom";
 
 import ProtectedRoute
-  from "./features/auth/components/ProtectedRoute";
+  from "./features/auth/ProtectedRoute";
 
 import AdminLayout
   from "./layouts/AdminLayout";
 
 const LoginPage =
-  lazy(() => import("./features/auth/pages/LoginPage"));
+  lazy(() => import("./features/auth/LoginPage"));
 
 const DashboardPage =
-  lazy(() => import("./features/dashboard/pages/DashboardPage"));
+  lazy(() => import("./features/dashboard/DashboardPage"));
 
 const ServicesPage =
-  lazy(() => import("./features/services/pages/ServicesPage"));
+  lazy(() => import("./features/services/ServicesPage"));
 
 const AddServicePage =
-  lazy(() => import("./features/services/pages/AddServicePage"));
+  lazy(() => import("./features/services/AddServicePage"));
 
 const TransactionsPage =
-  lazy(() => import("./features/transactions/pages/TransactionsPage"));
+  lazy(() => import("./features/transactions/TransactionsPage"));
 
 const AddTransactionPage =
-  lazy(() => import("./features/transactions/pages/AddTransactionPage"));
+  lazy(() => import("./features/transactions/AddTransactionPage"));
 
 const AnnouncementsPage =
-  lazy(() => import("./features/announcements/pages/AnnouncementsPage"));
+  lazy(() => import("./features/announcements/AnnouncementsPage"));
 
 const AddAnnouncementPage =
-  lazy(() => import("./features/announcements/pages/AddAnnouncementPage"));
+  lazy(() => import("./features/announcements/AddAnnouncementPage"));
 
 const AdminProfilePage =
-  lazy(() => import("./features/profile/pages/AdminProfilePage"));
+  lazy(() => import("./features/profile/AdminProfilePage"));
 
 function RouteLoadingFallback() {
   return (
@@ -92,7 +92,17 @@ function App() {
 
         <Route
           path="/login"
-          element={<LoginPage />}
+          element={<LoginPage initialMode="login" />}
+        />
+
+
+        {/* =====================================================
+            FORGOT PASSWORD / PASSWORD RECOVERY
+            ===================================================== */}
+
+        <Route
+          path="/forgot-password"
+          element={<LoginPage initialMode="forgot_password" />}
         />
 
 

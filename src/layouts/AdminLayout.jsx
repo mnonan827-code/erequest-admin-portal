@@ -4,8 +4,8 @@ import {
   useNavigate
 } from "react-router-dom";
 
-import { logoutAdmin } from "../features/auth/services/authService";
-import { useAdminProfile } from "../features/profile/context/AdminProfileContext";
+import { logoutAdmin } from "../features/auth/authService";
+import { useAdminProfile } from "../features/profile/AdminProfileContext";
 
 import "./AdminLayout.css";
 
